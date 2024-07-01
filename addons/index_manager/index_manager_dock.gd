@@ -4,14 +4,7 @@ extends Control
 @onready var reload_button: Button = $VSplitContainer/ReloadBtn
 @onready var asset_tab_container := $VSplitContainer/AssetTabContainer
 
-var asset_types: Array[String] = [
-	"textures",
-	"fonts",
-	"materials",
-	"models",
-	"patchdata",
-	"maps",
-]
+var asset_types := Identifier.get_all_resource_types()
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:

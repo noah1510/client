@@ -27,6 +27,9 @@ public:
 	static String get_content_type_from_resouce(String _name);
 	static String get_resource_prefix_from_type(String _name);
 
+	static TypedArray<String> get_all_resource_types();
+	static TypedArray<String> get_all_content_types();
+
 	String get_content_type() const;
 	String get_content_prefix() const;
 
@@ -34,6 +37,7 @@ public:
 
 	String get_group() const;
 	String get_name() const;
+	String get_resource_id() const;
 
 	bool is_valid() const;
 	

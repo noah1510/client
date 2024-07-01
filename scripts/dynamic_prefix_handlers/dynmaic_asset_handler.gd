@@ -2,6 +2,8 @@ extends ResourceFormatLoader
 class_name DynmaicPrefixHandler
 
 
+var supported_prefixes := Identifier.get_all_content_types()
+
 static func get_resource_path(path: String):
 	var resource_id := Identifier.for_resource(path)
 	if not resource_id.is_valid():
@@ -19,22 +21,11 @@ static func get_resource_path(path: String):
 
 
 func _recognize_path(path: String, _type: StringName) -> bool:
-	if path.begins_with("texture://"):
-		return true
-	
-	if path.begins_with("font://"):
-		return true
+	for prefix in supported_prefixes:
+		if path.begins_with(prefix + "://"):
+			return true
 
-	if path.begins_with("material://"):
-		return true
-
-	if path.begins_with("model://"):
-		return true
-
-	if path.begins_with("gamemode://"):
-		return true
-	
-	return path.begins_with("dyn://")
+	return false
 
 
 func _load(

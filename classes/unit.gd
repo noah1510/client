@@ -18,6 +18,7 @@ class_name Unit
 
 var maximum_stats: StatCollection
 var current_stats: StatCollection
+var per_level_stats: StatCollection
 
 var has_mana: bool = false
 
@@ -43,24 +44,30 @@ signal died
 
 
 func _init():
-	maximum_stats = StatCollection.from_dict({
-		"health_max": 640,
-		"health_regen": 3.5,
+	if maximum_stats == null:
+		maximum_stats = StatCollection.from_dict({
+			"health_max": 640,
+			"health_regen": 3.5,
 
-		"mana_max": 280,
-		"mana_regen": 7,
-		
-		"armor": 26,
-		"magic_resist": 30,
+			"mana_max": 280,
+			"mana_regen": 7,
+			
+			"armor": 26,
+			"magic_resist": 30,
 
-		"attack_range": 3.0,
-		"attack_damage": 60,
-		"attack_speed": 0.75,
+			"attack_range": 3.0,
+			"attack_damage": 60,
+			"attack_speed": 0.75,
 
-		"movement_speed": 100,
-	} as Dictionary)
+			"movement_speed": 100,
+		} as Dictionary)
 	
-	current_stats = maximum_stats.get_copy()
+	if current_stats == null:
+		current_stats = maximum_stats.get_copy()
+
+	if per_level_stats == null:
+		per_level_stats = StatCollection.new()
+
 
 func _ready():
 	pass

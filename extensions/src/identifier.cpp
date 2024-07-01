@@ -10,9 +10,13 @@ void Identifier::_bind_methods() {
 
 	ClassDB::bind_static_method("Identifier", D_METHOD("get_content_type_from_resouce", "_name"), &Identifier::get_content_type_from_resouce);
 	ClassDB::bind_static_method("Identifier", D_METHOD("get_resource_prefix_from_type", "_name"), &Identifier::get_resource_prefix_from_type);
+
+	ClassDB::bind_static_method("Identifier", D_METHOD("get_all_resource_types"), &Identifier::get_all_resource_types);
+	ClassDB::bind_static_method("Identifier", D_METHOD("get_all_content_types"), &Identifier::get_all_content_types);
 	
 	ClassDB::bind_method(D_METHOD("get_group"), &Identifier::get_group);
 	ClassDB::bind_method(D_METHOD("get_name"), &Identifier::get_name);
+	ClassDB::bind_method(D_METHOD("get_resource_id"), &Identifier::get_resource_id);
 	ClassDB::bind_method(D_METHOD("is_valid"), &Identifier::is_valid);
 	ClassDB::bind_method(D_METHOD("to_string"), &Identifier::to_string);
 	ClassDB::bind_method(D_METHOD("get_content_type"), &Identifier::get_content_type);
@@ -31,6 +35,10 @@ String Identifier::get_group() const {
 
 String Identifier::get_name() const {
 	return name;
+}
+
+String Identifier::get_resource_id() const{
+	return "dyn://" + to_string();
 }
 
 bool Identifier::is_valid() const {
@@ -58,76 +66,80 @@ bool Identifier::is_texture() const{
 }
 
 String Identifier::to_string() const {
-	String combined = group;
-	combined += ":";
-	combined += name;
-	return combined;
+	return String{group} + ":" + name;
+}
+
+static inline HashMap<String, String> get_content_type_map(){
+	HashMap<String, String> map;
+
+	map["dyn"] = "dynamic";
+    map["texture"] = "textures";
+    map["font"] = "fonts";
+    map["material"] = "materials";
+    map["model"] = "models";
+    map["gamemode"] = "patchdata";
+    map["map"] = "maps";
+    map["character"] = "characters";
+    map["shader"] = "shaders";
+	map["style"] = "styles";
+
+	return map;
 }
 
 String Identifier::get_content_type_from_resouce(String _name){
+	const static HashMap<String, String> content_type_map = get_content_type_map();
+
 	if (!_name.contains("://")){
 		return "";
 	}
 
 	String prefix = _name.split("://")[0];
-	if (prefix == "dyn"){
-		return "dynamic";
-	}
-
-	if (prefix == "texture"){
-		return "textures";
-	}
-
-	if (prefix == "font"){
-		return "fonts";
-	}
-
-	if (prefix == "material"){
-		return "materials";
-	}
-
-	if (prefix == "model"){
-		return "models";
-	}
-
-	if (prefix == "gamemode"){
-		return "patchdata";
-	}
-
-	if (prefix == "map"){
-		return "maps";
+	if (content_type_map.has(prefix)){
+		return String{content_type_map[prefix]};
 	}
 
 	return "";
 }
 
 String Identifier::get_resource_prefix_from_type(String _name){
-	if (_name == "textures"){
-		return "texture://";
-	}
+	const static HashMap<String, String> content_type_map = get_content_type_map();
 
-	if (_name == "fonts"){
-		return "font://";
-	}
-
-	if (_name == "materials"){
-		return "material://";
-	}
-
-	if (_name == "models"){
-		return "model://";
-	}
-
-	if (_name == "patchdata"){
-		return "gamemode://";
-	}
-
-	if (_name == "maps"){
-		return "map://";
+    for (const auto& [key, value] : content_type_map){
+		if (value == _name){
+			String prefix{key};
+			return prefix + "://";
+		}
 	}
 
 	return "dyn://";
 }
+
+
+TypedArray<String> Identifier::get_all_resource_types(){
+	const static HashMap<String, String> content_type_map = get_content_type_map();
+
+	TypedArray<String> types;
+	types.resize(content_type_map.size());
+
+	for (const auto& [key, value] : content_type_map){
+		types.push_back(value);
+	}
+
+	return types;
+}
+
+TypedArray<String> Identifier::get_all_content_types(){
+	const static HashMap<String, String> content_type_map = get_content_type_map();
+
+	TypedArray<String> types;
+	types.resize(content_type_map.size());
+
+	for (const auto& [key, value] : content_type_map){
+		types.push_back(key);
+	}
+	return types;
+}
+
 
 Identifier* Identifier::from_string(String _id_string) {
 	String group = "openchamp";
@@ -163,6 +175,7 @@ Identifier* Identifier::from_values(String _group, String _name) {
 Identifier* Identifier::for_resource(String _resource_path) {
 	String content_type = get_content_type_from_resouce(_resource_path);
 	if (content_type == ""){
+		UtilityFunctions::print("Failed to get content type from resource: " + _resource_path);
 		return nullptr;
 	}
 	String prefix = get_resource_prefix_from_type(content_type);

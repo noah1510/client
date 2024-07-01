@@ -50,6 +50,17 @@ func load_from_json(_json: Dictionary) -> bool:
 		print("Character (%s): Character already exists in character registry." % char_id_str)
 		return false
 
+	var char_model_id = null
+	if _json_data.has("model_id"):
+		var raw_model_id = _json_data["model_id"]
+		if not (raw_model_id is String):
+			print("Character (%s): model_id must be a string." % char_id_str)
+			return false
+
+		char_model_id = Identifier.for_resource("character://" + raw_model_id)
+	else:
+		char_model_id = Identifier.for_resource("character://" + char_id_str)
+
 	var raw_stats = _json_data["base_stats"]
 	if not (raw_stats is Dictionary):
 		print("Character (%s): base_stats must be a dictionary." % char_id_str)
@@ -80,7 +91,7 @@ func load_from_json(_json: Dictionary) -> bool:
 
 	var new_char = Character.new(
 		char_id,
-		null,
+		char_model_id,
 		null,
 		stats,
 		stat_growth,
