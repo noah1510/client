@@ -119,8 +119,6 @@ TypedArray<String> Identifier::get_all_resource_types(){
 	const static HashMap<String, String> content_type_map = get_content_type_map();
 
 	TypedArray<String> types;
-	types.resize(content_type_map.size());
-
 	for (const auto& [key, value] : content_type_map){
 		types.push_back(value);
 	}
@@ -132,8 +130,6 @@ TypedArray<String> Identifier::get_all_content_types(){
 	const static HashMap<String, String> content_type_map = get_content_type_map();
 
 	TypedArray<String> types;
-	types.resize(content_type_map.size());
-
 	for (const auto& [key, value] : content_type_map){
 		types.push_back(key);
 	}

@@ -33,8 +33,6 @@ func _build_asset_list():
 	var category_continers = {}
 	
 	var asset_tab_all := VBoxContainer.new()
-	asset_tab_all.name = "all"
-	category_continers["all"] = asset_tab_all
 	
 	for asset_type in asset_types:
 		var asset_tab_typed := VBoxContainer.new()
@@ -43,35 +41,33 @@ func _build_asset_list():
 	
 	# create the all category
 	var asset_keys = dynamic_assets.keys()
-	for key in asset_keys:
-		var asset_label_all = Label.new()
-		asset_label_all.text = "dyn://" + key
-		asset_label_all.mouse_filter = Control.MOUSE_FILTER_PASS
-		asset_label_all.tooltip_text = dynamic_assets[key]
-		asset_label_all.gui_input.connect(
-			func asset_callback(input_event):
-				_copy_asset_id(input_event, asset_label_all.text)
-		)
-		category_continers["all"].add_child(asset_label_all)
-		
-		var asset_id = Identifier.from_string(key)
-		var content_id = asset_id.get_content_identifier()
-		var asset_type = asset_id.get_content_type()
-		if content_id == null:
-			print('got null as content id for: ' + asset_id.to_string() )
-			continue
-		
-		var asset_label_category = Label.new()
-		
-		asset_label_category.text = asset_id.get_content_prefix() + content_id.to_string()
-		asset_label_category.mouse_filter = Control.MOUSE_FILTER_STOP
-		asset_label_category.tooltip_text = dynamic_assets[key]
-		
-		asset_label_category.gui_input.connect(
-			func asset_callback(input_event):
-				_copy_asset_id(input_event, asset_label_category.text)
-		)
-		category_continers[asset_type].add_child(asset_label_category)
+	for type in asset_types:
+		for key in asset_keys:
+			var asset_id = Identifier.from_string(key)
+			var content_id = asset_id.get_content_identifier()
+			var asset_type = asset_id.get_content_type()
+			if content_id == null:
+				print('got null as content id for: ' + asset_id.to_string() )
+				continue
+
+			if asset_type != type and type != 'dynamic':
+				continue
+			
+			var asset_label_category = Label.new()
+			
+			if type == 'dynamic':
+				asset_label_category.text = Identifier.get_resource_prefix_from_type(type) + asset_id.to_string()
+			else:
+				asset_label_category.text = Identifier.get_resource_prefix_from_type(type) + content_id.to_string()
+			
+			asset_label_category.mouse_filter = Control.MOUSE_FILTER_STOP
+			asset_label_category.tooltip_text = dynamic_assets[key]
+			
+			asset_label_category.gui_input.connect(
+				func asset_callback(input_event):
+					_copy_asset_id(input_event, asset_label_category.text)
+			)
+			category_continers[type].add_child(asset_label_category)
 		
 	# add all tabs to the tab container
 	for category_name in category_continers.keys():
