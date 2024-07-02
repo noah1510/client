@@ -14,8 +14,8 @@ func update(entity: Unit, delta):
 	# Client only
 	if entity.global_position != entity.server_position:
 		var lrp = delta * 8
-		var lerp = entity.global_position.lerp(entity.server_position, lrp)
-		entity.global_position = lerp
+		var _lerp = entity.global_position.lerp(entity.server_position, lrp)
+		entity.global_position = _lerp
 
 
 func update_tick_server(entity: Unit, delta):

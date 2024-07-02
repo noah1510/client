@@ -9,12 +9,14 @@ func _ready():
 
 
 func _physics_process(delta):
-	time_elapsed += delta;
-	set_time(time_elapsed)
+	time_elapsed += delta
+	set_time(int(time_elapsed))
 
 func set_time(t:int):
-	var sec = t % 60
-	var min = (t-sec)/60
-	if min < 10:
-		min = "0" + str(min)
-	text = str(min) + ":" + str(sec)
+	var sec: int = t % 60
+	var _min := int((t-sec) / 60.0)
+	
+	text = ""
+	if _min < 10:
+		text = "0"
+	text += str(_min) + ":" + str(sec)

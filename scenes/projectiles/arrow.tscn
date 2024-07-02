@@ -1,6 +1,6 @@
 [gd_scene load_steps=12 format=3]
 
-[ext_resource type="PackedScene" path="model://particles/arrow.glb" id="1_gm6ey"]
+[ext_resource type="PackedScene" path="model://particles/arrow" id="1_gm6ey"]
 [ext_resource type="Script" path="res://scenes/projectiles/projectile.gd" id="2_1bci5"]
 [ext_resource type="Shader" path="res://addons/gpu_trail/shaders/trail.gdshader" id="3_sv5hu"]
 [ext_resource type="Shader" path="res://addons/gpu_trail/shaders/trail_draw_pass.gdshader" id="4_atog6"]

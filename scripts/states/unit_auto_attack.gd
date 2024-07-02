@@ -16,7 +16,7 @@ func enter(entity: Unit, _args = null):
 
 
 func exit(entity: Unit):
-	windup_timer.timeout.disconnect
+	windup_timer.timeout.disconnect(do_attack)
 
 
 func update(entity: Unit, delta):
