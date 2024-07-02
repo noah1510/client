@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=4 format=3 uid="uid://cvb2x4ircsoxh"]
 
 [ext_resource type="PackedScene" path="res://champions/unit.tscn" id="1_cybpu"]
 [ext_resource type="PackedScene" path="res://ui/player_stats/healthbar.tscn" id="2_fhn0u"]
@@ -7,8 +7,6 @@
 [node name="Champion" instance=ExtResource("1_cybpu")]
 script = ExtResource("2_iykai")
 nametag = ""
-max_mana = 100.0
-mana_regen = 5.0
 can_respawn = true
 
 [node name="Healthbar" parent="." index="0" instance=ExtResource("2_fhn0u")]

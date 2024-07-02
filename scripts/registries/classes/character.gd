@@ -73,6 +73,8 @@ func spawn(spawn_args: Dictionary):
 	character.position = spawn_args["position"]
 	character.server_position = character.position
 
+	character.unit_id = id.to_string()
+
 	# Add all the common components
 
 	return character

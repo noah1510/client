@@ -91,19 +91,13 @@ func _spawn_character(args):
 	
 	print("loading character:" + spawn_args["character"])
 	
-	# TODO: implement the actual character loading
-	# This requires the character registry to be implemented
-	var new_char_scene = load("res://champions/dummy.tscn")
-	var new_char = new_char_scene.instantiate()
 	
-	new_char.name = spawn_args["name"]
-	new_char.id = spawn_args["id"]
-	new_char.nametag = spawn_args["nametag"]
-	new_char.team = spawn_args["team"]
-	new_char.position = spawn_args["position"]
-	new_char.server_position = new_char.position
+	var char_data = RegistryManager.characters().get_element(spawn_args["character"])
+	if not char_data:
+		print("Error character data could not be found in registry!")
+		return null
 
-	return new_char
+	return char_data.spawn(spawn_args)
 
 
 func _load_config():

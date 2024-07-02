@@ -27,6 +27,8 @@ var current_shielding: int = 0
 # Rotation:
 @export var turn_speed: float = 15.0
 
+@export var unit_id : String = ""
+
 # Each bit of cc_state represents a different type of crowd control.
 var cc_state: int = 0
 var effect_array: Array[UnitEffect] = []
