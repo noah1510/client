@@ -172,51 +172,7 @@ func camera_movement_handler() -> void:
 	# don't move the cam while changing the settings since that is annoying af
 	if Config.in_focued_menu:
 		return
-	
-	# If centered, blindly follow the champion
-	if (Config.camera_settings.is_cam_centered):
-		camera_target_position = get_target_position(multiplayer.get_unique_id())
-	else:
-		#ignore the input if this window is not even focused
-		if not get_window().has_focus():
-			return
-		
-		# Get Mouse Coords on screen
-		var current_mouse_position = get_viewport().get_mouse_position()
-		var size = get_viewport().get_visible_rect().size
-		var cam_delta = Vector3(0, 0, 0)
-		var edge_margin = Config.camera_settings.edge_margin
-		
-		# Check if there is a collision at the mouse position
-		if not get_viewport().get_visible_rect().has_point(
-			get_viewport().get_final_transform() * current_mouse_position
-		):
-			return
-			
-		# Edge Panning
-		if current_mouse_position.x <= edge_margin:
-			cam_delta.x -= 1
-		elif current_mouse_position.x >= size.x - edge_margin:
-			cam_delta.x += 1
 
-		if current_mouse_position.y <= edge_margin:
-			cam_delta.z -= 1
-		elif current_mouse_position.y >= size.y - edge_margin:
-			cam_delta.z += 1
-		
-		# Keyboard input
-		cam_delta.x += Input.get_action_strength("player_right") - Input.get_action_strength("player_left")
-		cam_delta.z += Input.get_action_strength("player_down") - Input.get_action_strength("player_up")
-		
-		# Middle mouse dragging
-		if is_middle_mouse_dragging:
-			var mouse_delta = current_mouse_position - initial_mouse_position
-			cam_delta += Vector3(mouse_delta.x, 0, mouse_delta.y) * Config.camera_settings.cam_pan_sensitivity
-		
-		# Apply camera movement
-		if cam_delta != Vector3.ZERO:
-			camera_target_position += cam_delta
-	
 	# Zoom
 	if Input.is_action_just_pressed("player_zoomin"):
 		if spring_arm.spring_length > Config.camera_settings.min_zoom:
@@ -228,9 +184,56 @@ func camera_movement_handler() -> void:
 	# Recenter - Tap
 	if Input.is_action_pressed("player_camera_recenter"):
 		camera_target_position = get_target_position(multiplayer.get_unique_id())
+		
 	# Recenter - Toggle
 	if Input.is_action_just_pressed("player_camera_recenter_toggle"):
 		Config.camera_settings.is_cam_centered = (!Config.camera_settings.is_cam_centered)
+	
+	# If centered, blindly follow the champion
+	if (Config.camera_settings.is_cam_centered):
+		camera_target_position = get_target_position(multiplayer.get_unique_id())
+		return
+	
+	#ignore the input if this window is not even focused
+	if not get_window().has_focus():
+		return
+	
+	# Get Mouse Coords on screen
+	var current_mouse_position = get_viewport().get_mouse_position()
+	var size = get_viewport().get_visible_rect().size
+	var cam_delta = Vector3(0, 0, 0)
+	var edge_margin = Config.camera_settings.edge_margin
+	
+	# Check if there is a collision at the mouse position
+	if not get_viewport().get_visible_rect().has_point(
+		get_viewport().get_final_transform() * current_mouse_position
+	):
+		return
+		
+	# Edge Panning
+	if current_mouse_position.x <= edge_margin:
+		cam_delta.x -= 1
+	elif current_mouse_position.x >= size.x - edge_margin:
+		cam_delta.x += 1
+
+	if current_mouse_position.y <= edge_margin:
+		cam_delta.z -= 1
+	elif current_mouse_position.y >= size.y - edge_margin:
+		cam_delta.z += 1
+	
+	# Keyboard input
+	cam_delta.x += Input.get_action_strength("player_right") - Input.get_action_strength("player_left")
+	cam_delta.z += Input.get_action_strength("player_down") - Input.get_action_strength("player_up")
+	
+	# Middle mouse dragging
+	if is_middle_mouse_dragging:
+		var mouse_delta = current_mouse_position - initial_mouse_position
+		cam_delta += Vector3(mouse_delta.x, 0, mouse_delta.y) * Config.camera_settings.cam_pan_sensitivity
+	
+	# Apply camera movement
+	if cam_delta != Vector3.ZERO:
+		camera_target_position += cam_delta
+
 
 func get_champion(pid: int) -> Node:
 	if character == null:
