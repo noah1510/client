@@ -1,6 +1,6 @@
 [gd_scene load_steps=8 format=3]
 
-[ext_resource type="Shader" path="res://assets/shaders/water.gdshader" id="1_s0jik"]
+[ext_resource type="Shader" path="shader://openchamp:environment/water" id="1_s0jik"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_0v68d"]
 noise_type = 3

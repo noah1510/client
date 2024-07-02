@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" path="res://scenes/startup.gd" id="1_7agtl"]
 [ext_resource type="Texture2D" path="texture://openchamp:openchamp" id="2_yrij0"]
-[ext_resource type="Shader" path="res://assets/shaders/fog.gdshader" id="3_b4cv1"]
-[ext_resource type="Theme" uid="uid://e507d8q4wvpm" path="res://assets/themes/default_theme.tres" id="4_h7jrb"]
+[ext_resource type="Shader" path="shader://openchamp:environment/fog" id="3_b4cv1"]
+[ext_resource type="Theme" uid="uid://e507d8q4wvpm" path="style://openchamp:themes/default_theme" id="4_h7jrb"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l0dm2"]
 bg_color = Color(0.0475577, 0.0475577, 0.0475576, 1)
