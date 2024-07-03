@@ -96,13 +96,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 0, -48)
 [node name="Spawn2" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 0, 48)
 
-[node name="Champions" type="Node" parent="."]
+[node name="Characters" type="Node" parent="."]
 
 [node name="Minions" type="Node" parent="."]
 
-[node name="ChampionSpawner" type="MultiplayerSpawner" parent="."]
+[node name="CharacterSpawner" type="MultiplayerSpawner" parent="."]
 _spawnable_scenes = PackedStringArray("res://Characters/champion.tscn")
-spawn_path = NodePath("../Champions")
+spawn_path = NodePath("../Characters")
 spawn_limit = 10
 
 [node name="ServerListener" type="Node" parent="."]

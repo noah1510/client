@@ -9,7 +9,7 @@ enum EndCondition{
 @export var map_configuration: Dictionary = {}
 
 @export var connected_players: Array
-@export var champion_container: Node
+@export var character_container: Node
 
 @export var player_spawns: Array = []
 @export var unit_spawns: Array = []
@@ -50,7 +50,7 @@ func _ready():
 		spawn_args["team"] = player["team"]
 		spawn_args["position"] = Spawns[str(player["team"])]
 		
-		var new_char = $ChampionSpawner.spawn(spawn_args)
+		var new_char = $CharacterSpawner.spawn(spawn_args)
 		new_char.look_at(Vector3(0,0,0))
 		Characters[player['peer_id']] = new_char
 
@@ -60,18 +60,18 @@ func _process_delta(_delta):
 
 
 func _setup_nodes():
-	champion_container = Node.new()
-	champion_container.name = "Characters"
-	add_child(champion_container)
-	champion_container = get_node("Characters")
+	character_container = Node.new()
+	character_container.name = "Characters"
+	add_child(character_container)
+	character_container = get_node("Characters")
 	
-	var champion_spawner = MultiplayerSpawner.new()
-	champion_spawner.name = "ChampionSpawner"
-	champion_spawner.spawn_path = champion_container.get_path()
-	champion_spawner.spawn_limit = 50
-	champion_spawner.spawn_function = _spawn_character
+	var character_spawner = MultiplayerSpawner.new()
+	character_spawner.name ="CharacterSpawner"
+	character_spawner.spawn_path = character_container.get_path()
+	character_spawner.spawn_limit = 50
+	character_spawner.spawn_function = _spawn_character
 	
-	add_child(champion_spawner)
+	add_child(character_spawner)
 	
 	var minions_node = Node.new()
 	minions_node.name = "Minions"
@@ -223,8 +223,8 @@ func _decode_spawn_common(data: Dictionary):
 
 func client_setup():
 	# Add the player into the world
-	# The player rig will ask the server for their champion
-	var player_rig = load("res://champions/_player.tscn").instantiate()
+	# The player rig will ask the server for their character
+	var player_rig = load("res://scenes/player/_player.tscn").instantiate()
 	add_child(player_rig)
 	
 	# instantiate and add all the UI components
@@ -246,13 +246,13 @@ func register_player():
 
 @rpc("any_peer", "call_local")
 func move_to(pos: Vector3):
-	var character = get_champion(multiplayer.get_remote_sender_id())
+	var character = get_character(multiplayer.get_remote_sender_id())
 	character.change_state.rpc("Moving", pos)
 
 
 @rpc("any_peer", "call_local")
 func target(target_name):
-	var character = get_champion(multiplayer.get_remote_sender_id())
+	var character = get_character(multiplayer.get_remote_sender_id())
 	# Dont Kill Yourself
 	if target_name == character.name:
 		print_debug("That's you ya idjit") # :O
@@ -263,7 +263,7 @@ func target(target_name):
 @rpc("any_peer", "call_local")
 func spawn_ability(ability_name, ability_type, ability_pos, ability_mana_cost, cooldown, ab_id):
 	var peer_id = multiplayer.get_remote_sender_id()
-	var character = get_champion(peer_id)
+	var character = get_character(peer_id)
 	if character.mana < ability_mana_cost:
 		print("Not enough mana!")
 		return
@@ -306,7 +306,7 @@ func free_ability(cooldown: float, peer_id: int, ab_id: int) -> void:
 	player_cooldowns[peer_id][ab_id] = 0
 
 
-func get_champion(id:int):
+func get_character(id:int):
 	var character = Characters.get(id)
 	if not character:
 		print_debug("Failed to find character")

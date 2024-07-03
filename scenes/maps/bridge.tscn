@@ -262,9 +262,9 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_uhb03")
 
-[node name="Map" type="Node3D" node_paths=PackedStringArray("champion_container") groups=["Map"]]
+[node name="Map" type="Node3D" node_paths=PackedStringArray("character_container") groups=["Map"]]
 script = ExtResource("1_uy26l")
-champion_container = NodePath("Champions")
+character_container = NodePath("Characters")
 
 [node name="World" type="NavigationRegion3D" parent="."]
 navigation_mesh = SubResource("NavigationMesh_21owx")
@@ -285,15 +285,15 @@ shadow_enabled = true
 [node name="WorldEnvironment" type="WorldEnvironment" parent="World"]
 environment = SubResource("Environment_qjopm")
 
-[node name="Champions" type="Node" parent="."]
+[node name="Characters" type="Node" parent="."]
 
 [node name="Abilities" type="Node" parent="."]
 
 [node name="Minions" type="Node" parent="."]
 
-[node name="ChampionSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://champions/dummy.tscn")
-spawn_path = NodePath("../Champions")
+[node name="CharacterSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("res://characters/dummy.tscn")
+spawn_path = NodePath("../Characters")
 spawn_limit = 20
 
 [node name="AbilitySpawner" type="MultiplayerSpawner" parent="."]

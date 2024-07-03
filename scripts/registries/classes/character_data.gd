@@ -1,5 +1,5 @@
 extends Object
-class_name Character
+class_name CharacterData
 
 var stats = StatCollection.new()
 var stat_growth = StatCollection.new()
@@ -60,7 +60,7 @@ func spawn(spawn_args: Dictionary):
 		return null
 
 	# set the character's script and set all the values
-	#character.set_script("res://classes/champion.gd")
+	#character.set_script("res://classes/character.gd")
 
 	character.maximum_stats = stats.get_copy()
 	character.current_stats = stats.get_copy()

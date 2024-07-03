@@ -74,7 +74,7 @@ func _input(event):
 			return
 
 func get_target_position(pid: int) -> Vector3:
-	var champ = get_champion(pid)
+	var champ = get_character(pid)
 	if champ:
 		return champ.position
 	return Vector3.ZERO
@@ -101,7 +101,7 @@ func player_action(event, play_marker: bool=false, attack_move: bool=false):
 
 func _player_action_attack(collider):
 	if not collider is Unit: return
-	if collider.team == get_champion(multiplayer.get_unique_id()).team: return
+	if collider.team == get_character(multiplayer.get_unique_id()).team: return
 	server_listener.rpc_id(get_multiplayer_authority(), "target", collider.name)
 
 
@@ -121,7 +121,7 @@ func _player_action_move(result, play_marker: bool, attack_move: bool):
 			#var collider = attack_move_cast.get_collider(i)
 			#if collider == null: continue
 			#if not "health" in collider: continue
-			#if collider.team == get_champion(multiplayer.get_unique_id()).team: continue
+			#if collider.team == get_character(multiplayer.get_unique_id()).team: continue
 			#if closest_enemy == null:
 				#closest_enemy = collider
 				#continue
@@ -156,16 +156,16 @@ func _process(delta):
 func detect_ability_use() -> void:
 	var pid = multiplayer.get_unique_id()
 	if Input.is_action_just_pressed("player_ability1"):
-		get_champion(pid).trigger_ability(1)
+		get_character(pid).trigger_ability(1)
 		return
 	if Input.is_action_just_pressed("player_ability2"):
-		get_champion(pid).trigger_ability(2)
+		get_character(pid).trigger_ability(2)
 		return
 	if Input.is_action_just_pressed("player_ability3"):
-		get_champion(pid).trigger_ability(3)
+		get_character(pid).trigger_ability(3)
 		return
 	if Input.is_action_just_pressed("player_ability4"):
-		get_champion(pid).trigger_ability(4)
+		get_character(pid).trigger_ability(4)
 		return
 
 func camera_movement_handler() -> void:
@@ -189,7 +189,7 @@ func camera_movement_handler() -> void:
 	if Input.is_action_just_pressed("player_camera_recenter_toggle"):
 		Config.camera_settings.is_cam_centered = (!Config.camera_settings.is_cam_centered)
 	
-	# If centered, blindly follow the champion
+	# If centered, blindly follow the character
 	if (Config.camera_settings.is_cam_centered):
 		camera_target_position = get_target_position(multiplayer.get_unique_id())
 		return
@@ -235,7 +235,7 @@ func camera_movement_handler() -> void:
 		camera_target_position += cam_delta
 
 
-func get_champion(pid: int) -> Node:
+func get_character(pid: int) -> Node:
 	if character == null:
 		var champs = $"../Characters".get_children()
 		for child in champs:

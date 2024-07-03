@@ -1,5 +1,5 @@
 extends Unit
-class_name Champion
+class_name CharacterUnit
 
 
 @export var nametag : String

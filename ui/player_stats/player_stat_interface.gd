@@ -1,7 +1,7 @@
 extends Node
 
-@onready var healthbar = $"../ChampionUI/HealthMana/HealthBar"
-@onready var manabar = $"../ChampionUI/HealthMana/ManaBar"
+@onready var healthbar = $"../CharacterUI/HealthMana/HealthBar"
+@onready var manabar = $"../CharacterUI/HealthMana/ManaBar"
 
 
 func update_health(hp : int, max_hp : int = -1):

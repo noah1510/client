@@ -89,7 +89,7 @@ func load_from_json(_json: Dictionary) -> bool:
 
 			tags.append(tag)
 
-	var new_char = Character.new(
+	var new_char = CharacterData.new(
 		char_id,
 		char_model_id,
 		null,

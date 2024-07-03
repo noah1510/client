@@ -144,7 +144,7 @@ static inline void _cache_patch_data(String pack_path, String asset_group, HashM
 		}
 		asset_map[manifest_id->to_string()] = manifest_path;
 
-		Vector<String> patch_types = {"characters", "items", "misc", "map"};
+		Vector<String> patch_types = {"characters", "units", "items", "misc", "map"};
 
 		for (String patch_type:patch_types){
 
