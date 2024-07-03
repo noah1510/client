@@ -1,14 +1,14 @@
-[gd_scene load_steps=25 format=3 uid="uid://bevs6vkkwqdmv"]
+[gd_scene load_steps=24 format=3 uid="uid://bevs6vkkwqdmv"]
 
 [ext_resource type="Script" path="res://ui/game_ui.gd" id="1_21aey"]
-[ext_resource type="PackedScene" path="res://ui/settings_menu/settings_menu.tscn" id="1_b1o7r"]
+[ext_resource type="PackedScene" uid="uid://bu1bxbv3d7rpj" path="res://ui/settings_menu/settings_menu.tscn" id="1_b1o7r"]
 [ext_resource type="StyleBox" path="style://openchamp:elements/progressbar_back" id="2_ocle2"]
 [ext_resource type="StyleBox" path="style://openchamp:elements/health_fill" id="3_sb1q7"]
 [ext_resource type="StyleBox" path="style://openchamp:elements/mana_fill" id="4_bdhvv"]
 [ext_resource type="Script" path="res://ui/player_stats/player_stat_interface.gd" id="4_kvve8"]
 [ext_resource type="Script" path="res://ui/match_timer.gd" id="7_81ipw"]
 [ext_resource type="Texture2D" path="texture://openchamp:characters/fallback/ability_1" id="8_lnein"]
-[ext_resource type="Texture2D" path="texture://openchamp:characters/fallback/icon" id="9_3ihbb"]
+[ext_resource type="Texture2D" path="texture://openchamp:characters/fallback/icon" id="9_bog4o"]
 [ext_resource type="Texture2D" path="texture://openchamp:characters/ability_up" id="9_wnjpv"]
 [ext_resource type="FontFile" path="font://openchamp:alfa_slab_one-regular" id="10_6dx6a"]
 [ext_resource type="Theme" path="style://openchamp:themes/default_theme" id="10_amt63"]
@@ -76,9 +76,6 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_n4drl"]
-texture = ExtResource("9_3ihbb")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_78qky"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -535,21 +532,22 @@ offset_right = 85.0
 offset_bottom = 83.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_nd5bo")
 
-[node name="Portrait2" type="Panel" parent="CharacterUI"]
+[node name="Portrait" type="TextureRect" parent="CharacterUI"]
 layout_mode = 0
 offset_left = 5.0
 offset_top = 5.0
 offset_right = 74.0
 offset_bottom = 80.0
-theme_override_styles/panel = SubResource("StyleBoxTexture_n4drl")
+texture = ExtResource("9_bog4o")
+expand_mode = 4
 
-[node name="PortraitBorder" type="Panel" parent="CharacterUI/Portrait2"]
+[node name="PortraitBorder" type="Panel" parent="CharacterUI/Portrait"]
 z_index = 1
 layout_mode = 0
-offset_left = -3.0
-offset_top = -3.0
-offset_right = 72.0
-offset_bottom = 78.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 77.0
+offset_bottom = 83.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_78qky")
 
 [node name="HealthMana" type="Panel" parent="CharacterUI"]

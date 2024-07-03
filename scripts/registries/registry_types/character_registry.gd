@@ -51,15 +51,26 @@ func load_from_json(_json: Dictionary) -> bool:
 		return false
 
 	var char_model_id = null
-	if _json_data.has("model_id"):
-		var raw_model_id = _json_data["model_id"]
+	if _json_data.has("model"):
+		var raw_model_id = _json_data["model"]
 		if not (raw_model_id is String):
-			print("Character (%s): model_id must be a string." % char_id_str)
+			print("Character (%s): model must be a string." % char_id_str)
 			return false
 
 		char_model_id = Identifier.for_resource("character://" + raw_model_id)
 	else:
 		char_model_id = Identifier.for_resource("character://" + char_id_str)
+
+	var char_icon_id = null
+	if _json_data.has("icon"):
+		var raw_icon_id = _json_data["icon"]
+		if not (raw_icon_id is String):
+			print("Character (%s): icon must be a string." % char_id_str)
+			return false
+
+		char_icon_id = Identifier.for_resource("texture://" + raw_icon_id)
+	else:
+		char_icon_id = Identifier.for_resource("texture://openchamp:character/fallback/icon")
 
 	var raw_stats = _json_data["base_stats"]
 	if not (raw_stats is Dictionary):
@@ -92,7 +103,7 @@ func load_from_json(_json: Dictionary) -> bool:
 	var new_char = CharacterData.new(
 		char_id,
 		char_model_id,
-		null,
+		char_icon_id,
 		stats,
 		stat_growth,
 		tags

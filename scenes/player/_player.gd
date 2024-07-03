@@ -14,7 +14,7 @@ var initial_mouse_position := Vector2.ZERO
 var is_middle_mouse_dragging := false
 var is_right_mouse_dragging := false
 var is_left_mouse_dragging := false
-var character : CharacterBody3D
+var character : CharacterUnit
 
 @onready var marker = MoveMarker.instantiate();
 #@export var player := 1:
@@ -23,7 +23,7 @@ var character : CharacterBody3D
 		#$MultiplayerSynchronizer.set_multiplayer_authority(id)
 
 func _ready():
-	add_child(marker);
+	add_child(marker)
 	# For now close game when server dies
 	multiplayer.server_disconnected.connect(get_tree().quit)
 	spring_arm.spring_length = Config.camera_settings.max_zoom
@@ -35,6 +35,7 @@ func _ready():
 		server_listener = get_parent()
 		while !server_listener.is_in_group("Map"):
 			server_listener = server_listener.get_parent()
+
 
 func _input(event):
 	if Config.is_dedicated_server: return;
@@ -73,11 +74,13 @@ func _input(event):
 			player_action(event, false)
 			return
 
+
 func get_target_position(pid: int) -> Vector3:
 	var champ = get_character(pid)
 	if champ:
 		return champ.position
 	return Vector3.ZERO
+
 
 func player_action(event, play_marker: bool=false, attack_move: bool=false):
 	var from = camera.project_ray_origin(event.position)
@@ -98,6 +101,7 @@ func player_action(event, play_marker: bool=false, attack_move: bool=false):
 		_player_action_move(result, play_marker, attack_move)
 	# Attack
 	_player_action_attack(result.collider)
+
 
 func _player_action_attack(collider):
 	if not collider is Unit: return
@@ -139,8 +143,10 @@ func _play_move_marker(marker_position : Vector3, attack_move: bool = false):
 	marker.attack_move = attack_move
 	marker.play()
 
+
 func center_camera(playerid):
 	camera_target_position = get_target_position(playerid)
+
 
 func _process(delta):
 	if Config.is_dedicated_server : return ;
@@ -152,6 +158,7 @@ func _process(delta):
 	
 	# update the camera position using lerp
 	position = position.lerp(camera_target_position, delta * Config.camera_settings.cam_speed)
+
 
 func detect_ability_use() -> void:
 	var pid = multiplayer.get_unique_id()
@@ -167,6 +174,7 @@ func detect_ability_use() -> void:
 	if Input.is_action_just_pressed("player_ability4"):
 		get_character(pid).trigger_ability(4)
 		return
+
 
 func camera_movement_handler() -> void:
 	# don't move the cam while changing the settings since that is annoying af
@@ -245,6 +253,7 @@ func get_character(pid: int) -> Node:
 		return null
 	else:
 		return character
+
 
 func _on_camera_setting_changed():
 	spring_arm.spring_length = clamp(

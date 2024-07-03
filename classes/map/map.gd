@@ -24,6 +24,7 @@ var end_conditions = []
 const player_desktop_hud = preload("res://ui/game_ui.tscn")
 const player_desktop_settings = preload("res://ui/settings_menu/settings_menu.tscn")
 
+
 func _ready():
 	_load_config()
 	_setup_nodes()
@@ -32,14 +33,12 @@ func _ready():
 	# continueing here. For now we just do a 1 seconds delay.
 	await get_tree().create_timer(1).timeout
 	
+	if not Config.is_dedicated_server:
+		client_setup()
 	
 	if not multiplayer.is_server():
-		client_setup()
 		return
-	# Check if Server is included as a player
-	if multiplayer.get_peers().size() + 1 == connected_players.size():
-		client_setup()
-	
+
 	for player in connected_players:
 		var spawn_args = {}
 		
@@ -228,9 +227,11 @@ func client_setup():
 	add_child(player_rig)
 	
 	# instantiate and add all the UI components
-	add_child(player_desktop_hud.instantiate())
 	add_child(player_desktop_settings.instantiate())
-	
+
+	var hud = player_desktop_hud.instantiate()
+	hud._map = self
+	add_child(hud)
 
 
 @rpc("any_peer")
@@ -311,4 +312,5 @@ func get_character(id:int):
 	if not character:
 		print_debug("Failed to find character")
 		return false
+	
 	return character
