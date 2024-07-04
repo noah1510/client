@@ -79,7 +79,7 @@ static inline HashMap<String, String> get_content_type_map(){
     map["model"] = "models";
     map["gamemode"] = "patchdata";
     map["map"] = "maps";
-    map["character"] = "characters";
+    map["unit"] = "units";
     map["shader"] = "shaders";
 	map["style"] = "styles";
 
