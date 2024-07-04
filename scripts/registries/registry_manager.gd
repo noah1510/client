@@ -29,6 +29,10 @@ func characters() -> CharacterRegistry:
 	return _Character_Registry
 
 
+func units() -> UnitRegistry:
+	return _Unit_Registry
+
+
 ## Get a list of files that are not cached yet.
 ## This function should be called on the client before loading the manifest file.
 ## All missing files should be downloaded and cached before loading the manifest file.

@@ -11,10 +11,8 @@ enum EndCondition{
 @export var connected_players: Array
 @export var character_container: Node
 
-@export var player_spawns: Array = []
-@export var unit_spawns: Array = []
-
-@export var Spawns = {}
+@export var map_features: Node
+@export var player_spawns = {}
 
 var Characters = {}
 var player_cooldowns = {}
@@ -47,7 +45,7 @@ func _ready():
 		spawn_args["id"] = player["peer_id"]
 		spawn_args["nametag"] = player["name"]
 		spawn_args["team"] = player["team"]
-		spawn_args["position"] = Spawns[str(player["team"])]
+		spawn_args["position"] = player_spawns[str(player["team"])].position
 		
 		var new_char = $CharacterSpawner.spawn(spawn_args)
 		new_char.look_at(Vector3(0,0,0))
@@ -100,6 +98,15 @@ func _spawn_character(args):
 
 
 func _load_config():
+	# unlike the other nodes the map features node is not created in the _setup_nodes function
+	# this is needed because all features are added to this node and we need to load the map configuration
+	# before we can set up most of the nodes
+	var _map_features = Node.new()
+	_map_features.name = "MapFeatures"
+	add_child(_map_features)
+	map_features = get_node("MapFeatures")
+
+	# Load the map configuration
 	if not map_configuration.has("end_conditions"):
 		print("Map config is missing end conditions")
 		return
@@ -138,86 +145,7 @@ func _load_config():
 
 	var features = map_configuration["features"]
 	for feature in features:
-		_load_feature(feature)
-
-
-func _load_feature(data: Dictionary):
-	if not data.has("type"):
-		print("Feature is missing type")
-		return
-	
-	match data["type"]:
-		"player_spawn":
-			var spawn = _decode_spawn_common(data)
-			if spawn == null:
-				return
-
-			player_spawns.append(spawn)
-			Spawns[str(spawn["team"])] = spawn["position"]
-
-		"unit_spawn":
-			var spawn = _decode_spawn_common(data)
-			if spawn == null:
-				return
-
-			unit_spawns.append(spawn)
-		_:
-			print("Unknown feature type: " + data["type"])
-
-
-func _decode_spawn_common(data: Dictionary):
-	if not data.has("team"):
-		print("Spawn is missing team")
-		return null
-	
-	if not data.has("name"):
-		print("Spawn is missing name")
-		return null
-
-	if not data.has("spawn_behaviour"):
-		print("Spawn is missing spawn_behaviour")
-		return null
-
-	var feature_node: Node3D
-	var feature_nodes = find_children(data["name"])
-	for node in feature_nodes:
-		if node.name == data["name"]:
-			feature_node = node as Node3D
-			if feature_node != null:
-				break
-	
-	var position = Vector3(0,0,0)
-	
-	if feature_node == null:
-		if not data.has("position"):
-			print("Spawn is missing position")
-			return null
-			
-		var x = 0
-		var y = 0
-		var z = 0
-
-		if data["position"].has("x"):
-			x = data["position"]["x"]
-
-		if data["position"].has("y"):
-			y = data["position"]["y"]
-
-		if data["position"].has("z"):
-			z = data["position"]["z"]
-	
-		position = Vector3(x, y, z)
-		
-	else:
-		position = feature_node.position
-	
-
-	return {
-		"team": int(data["team"]),
-		"name": str(data["name"]),
-		"position": position,
-		"spawn_behaviour": data["spawn_behaviour"]
-	}
+		MapFeature.spawn_feature(feature, self)
 
 
 func client_setup():
@@ -295,7 +223,7 @@ func respawn(character:CharacterBody3D):
 	var rand = RandomNumberGenerator.new()
 	var x = rand.randf_range(0, 5)
 	var z = rand.randf_range(0, 5)
-	character.position = get_node("../Spawn"+str(character .team)).position + Vector3(x, 0, z)
+	character.position = player_spawns[str(character.team)].position + Vector3(x, 0, z)
 	character.set_health(character.get_health_max())
 	character.is_dead = false
 	character.show()
