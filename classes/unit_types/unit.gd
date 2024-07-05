@@ -2,9 +2,15 @@ extends CharacterBody3D
 class_name Unit
 
 
+# Signals
+signal died
+
 # General Stats:
 @export var id: int
 @export var team: int
+@export var index: int = 0
+@export var nametag: String
+@export var player_controlled: bool = false
 # Defensive Stats:
 
 #@export var magic_resist:float = 20.0
@@ -23,11 +29,12 @@ var per_level_stats: StatCollection
 var has_mana: bool = false
 
 var current_shielding: int = 0
+var turn_speed: float = 15.0
 
-# Rotation:
-@export var turn_speed: float = 15.0
+var level : int = 1
 
 @export var unit_id : String = ""
+@export var is_alive : bool = true
 
 # Each bit of cc_state represents a different type of crowd control.
 var cc_state: int = 0
@@ -37,11 +44,6 @@ var target_entity: Node = null
 var server_position
 
 var nav_agent : NavigationAgent3D
-
-@export var can_respawn: bool = false
-
-# Signals
-signal died
 
 # UI
 @export var projectile_scene: PackedScene = null
@@ -131,6 +133,7 @@ func _ready():
 	state_auto_attack_node.set_script(state_auto_attack_script)
 	state_machine_node.add_child(state_auto_attack_node)
 
+	state_machine_node.initial_state = state_idle_node
 	add_child(state_machine_node)
 
 	# set up the abilities
@@ -214,11 +217,19 @@ func heal(amount:float, keep_extra:bool = false):
 	if current_stats.health_max <= maximum_stats.health_max: return
 	if keep_extra:
 		current_shielding = current_stats.health_max - maximum_stats.health_max
+	
 	current_stats.health_max = maximum_stats.health_max
 
 
 func die():
+	is_alive = false
 	get_tree().quit()
+
+	died.emit()
+
+	if team > 0:
+		pass
+
 
 # UI
 func _update_healthbar(node: ProgressBar):
@@ -236,6 +247,11 @@ func move_on_path(delta: float):
 	velocity = direction.normalized() * current_stats.movement_speed * delta
 	rotation.y = lerp_angle(rotation.y, atan2(-direction.x, -direction.z), turn_speed * delta)
 	move_and_slide()
+
+
+func _trigger_ability(_index: int):
+	if not can_cast(): return
+	pass
 
 
 func apply_effect(effect: UnitEffect):

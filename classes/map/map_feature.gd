@@ -76,5 +76,5 @@ static func _get_position(node_name: String, parent: Node, fallback_data: Dictio
 	return _position
 
 
-func spawn(feature_data: Dictionary, parent: Node) -> bool:
+func spawn(_feature_data: Dictionary, _parent: Node) -> bool:
 	return false

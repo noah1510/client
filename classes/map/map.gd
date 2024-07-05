@@ -14,10 +14,13 @@ enum EndCondition{
 @export var map_features: Node
 @export var player_spawns = {}
 
+@export var time_elapsed : float = 0
+
 var Characters = {}
 var player_cooldowns = {}
 var end_conditions = []
 
+var last_player_index = 0
 
 const player_desktop_hud = preload("res://ui/game_ui.tscn")
 const player_desktop_settings = preload("res://ui/settings_menu/settings_menu.tscn")
@@ -44,16 +47,19 @@ func _ready():
 		spawn_args["character"] = player["character"]
 		spawn_args["id"] = player["peer_id"]
 		spawn_args["nametag"] = player["name"]
+		spawn_args["index"] = last_player_index
 		spawn_args["team"] = player["team"]
 		spawn_args["position"] = player_spawns[str(player["team"])].position
+
+		last_player_index += 1
 		
 		var new_char = $CharacterSpawner.spawn(spawn_args)
 		new_char.look_at(Vector3(0,0,0))
 		Characters[player['peer_id']] = new_char
 
 
-func _process_delta(_delta):
-	pass
+func _physics_process(delta):
+	time_elapsed += delta
 
 
 func _setup_nodes():
@@ -94,7 +100,12 @@ func _spawn_character(args):
 		print("Error character data could not be found in registry!")
 		return null
 
-	return char_data.spawn(spawn_args)
+	var new_char = char_data.spawn(spawn_args)
+
+	if multiplayer.is_server():
+		new_char.died.connect(func(): on_player_death(spawn_args["id"]))
+
+	return new_char
 
 
 func _load_config():
@@ -162,6 +173,45 @@ func client_setup():
 	add_child(hud)
 
 
+func on_player_death(player_id: int):
+	# get the character that died
+	var character = Characters.get(player_id)
+	var team = character.team
+
+	# Check if the game has ended
+	var team_alive = false
+	var team_elimination = false
+	for condition in end_conditions:
+		if condition["type"] != EndCondition.TEAM_ELIMINATION:
+			continue
+		
+		if team != condition["team"]:
+			continue
+		
+		team_elimination = true
+		for _char in Characters.values():
+			if _char.name == str(player_id):
+				continue
+			
+			if _char.team != team:
+				continue
+
+			if not _char.is_alive:
+				continue
+
+			team_alive = true
+			break
+
+	# End the game if a team has been eliminated
+	if team_elimination and not team_alive:
+		print("Team " + str(team) + " has been eliminated")
+		return
+
+	# get the respawn timer and respawn the player once it's done
+	var respawn_time = player_spawns[str(team)].get_respawn_time(character.level, time_elapsed)
+	get_tree().create_timer(respawn_time).timeout.connect(func(): respawn(character))
+
+
 @rpc("any_peer")
 func client_ready():
 	print(connected_players);
@@ -219,11 +269,12 @@ func spawn_local_effect(ability_name, ability_type, ability_pos, player_pos, pla
 	
 
 @rpc("any_peer", "call_local")
-func respawn(character:CharacterBody3D):
-	var rand = RandomNumberGenerator.new()
-	var x = rand.randf_range(0, 5)
-	var z = rand.randf_range(0, 5)
-	character.position = player_spawns[str(character.team)].position + Vector3(x, 0, z)
+func respawn(character: CharacterBody3D):
+	var spawner = player_spawns[str(character.team)]
+	
+	character.server_position = spawner.get_spawn_position(character.index)
+	character.position = character.server_position
+
 	character.set_health(character.get_health_max())
 	character.is_dead = false
 	character.show()

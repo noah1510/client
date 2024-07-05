@@ -5,25 +5,3 @@
 
 [node name="Character" instance=ExtResource("1_cybpu")]
 script = ExtResource("2_iykai")
-nametag = ""
-can_respawn = true
-
-[node name="AbilityCooldown1" type="Timer" parent="Timers" index="2"]
-process_callback = 0
-
-[node name="AbilityCooldown2" type="Timer" parent="Timers" index="3"]
-process_callback = 0
-
-[node name="AbilityCooldown3" type="Timer" parent="Timers" index="4"]
-process_callback = 0
-
-[node name="AbilityCooldown4" type="Timer" parent="Timers" index="5"]
-process_callback = 0
-
-[node name="Ability1" type="Node" parent="Abilities" index="1"]
-
-[node name="Ability2" type="Node" parent="Abilities" index="2"]
-
-[node name="Ability3" type="Node" parent="Abilities" index="3"]
-
-[node name="Ability4" type="Node" parent="Abilities" index="4"]

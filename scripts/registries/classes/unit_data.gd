@@ -162,23 +162,25 @@ func spawn(spawn_args: Dictionary):
 		print("Character (%s): Failed to instantiate model." % id.to_string())
 		return null
 
+	character.name = spawn_args["name"]
+	character.id = spawn_args["id"]
+	character.nametag = spawn_args["nametag"]
+	character.team = spawn_args["team"]
+	character.position = spawn_args["position"]
+
+	character.server_position = character.position
+
+	character.maximum_stats = stats.get_copy()
+	character.current_stats = stats.get_copy()
+	character.per_level_stats = stat_growth.get_copy()
+	character.unit_id = id.to_string()
 
 	if is_character:
 		# set the character's script and set all the values
 		#character.set_script("res://classes/character.gd")
 
-		character.maximum_stats = stats.get_copy()
-		character.current_stats = stats.get_copy()
-		character.per_level_stats = stat_growth.get_copy()
-
-		character.name = spawn_args["name"]
-		character.id = spawn_args["id"]
-		character.nametag = spawn_args["nametag"]
-		character.team = spawn_args["team"]
-		character.position = spawn_args["position"]
-		character.server_position = character.position
-
-		character.unit_id = id.to_string()
+		character.has_mana = true
+		character.player_controlled = true
 
 		# Add all the common components
 	else:
