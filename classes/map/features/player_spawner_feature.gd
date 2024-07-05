@@ -28,8 +28,8 @@ func spawn(feature_data: Dictionary, parent: Node) -> bool:
 		return false
 	spawn_behaviour = feature_data["spawn_behaviour"]
 
-	var _position = _get_position(name, parent, feature_data)
-	if _position == null:
+	position = _get_position(name, parent, feature_data)
+	if position == null:
 		print("Failed to get position")
 		return false
 

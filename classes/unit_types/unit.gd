@@ -36,13 +36,24 @@ var effect_array: Array[UnitEffect] = []
 var target_entity: Node = null
 var server_position
 
-@export var can_respawn: bool = false;
-@onready var nav_agent :NavigationAgent3D = $NavigationAgent3D
+var nav_agent : NavigationAgent3D
+
+@export var can_respawn: bool = false
+
 # Signals
 signal died
+
 # UI
 @export var projectile_scene: PackedScene = null
-@onready var healthbar = $Healthbar
+var healthbar : ProgressBar
+
+# Preloaded scripts and scenes
+const state_machine_script = preload("res://scripts/states/_state_machine.gd")
+const state_idle_script = preload("res://scripts/states/unit_idle.gd")
+const state_move_script = preload("res://scripts/states/unit_move.gd")
+const state_auto_attack_script = preload("res://scripts/states/unit_auto_attack.gd")
+
+const healthbar_scene = preload("res://ui/player_stats/healthbar.tscn")
 
 
 func _init():
@@ -72,7 +83,102 @@ func _init():
 
 
 func _ready():
-	pass
+	# setting up the multiplayer synchronization
+	var replication_config = SceneReplicationConfig.new()
+
+	replication_config.add_property(NodePath(".:rotation"))
+	replication_config.property_set_spawn(NodePath(".:rotation"), true)
+	replication_config.property_set_replication_mode(NodePath(".:rotation"), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
+
+	replication_config.add_property(NodePath(".:id"))
+	replication_config.property_set_spawn(NodePath(".:id"), true)
+	replication_config.property_set_replication_mode(NodePath(".:id"), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
+
+	replication_config.add_property(NodePath(".:maximum_stats"))
+	replication_config.property_set_spawn(NodePath(".:maximum_stats"), true)
+	replication_config.property_set_replication_mode(NodePath(".:maximum_stats"), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
+
+	replication_config.add_property(NodePath(".:current_stats"))
+	replication_config.property_set_spawn(NodePath(".:current_stats"), true)
+	replication_config.property_set_replication_mode(NodePath(".:current_stats"), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
+
+	replication_config.add_property(NodePath(".:server_position"))
+	replication_config.property_set_spawn(NodePath(".:server_position"), true)
+	replication_config.property_set_replication_mode(NodePath(".:server_position"), SceneReplicationConfig.REPLICATION_MODE_ALWAYS)
+	
+	var multiplayer_synchronizer = MultiplayerSynchronizer.new()
+	multiplayer_synchronizer.set_replication_config(replication_config)
+	multiplayer_synchronizer.name = "MultiplayerSynchronizer"
+	add_child(multiplayer_synchronizer)
+
+	# setting up the state machine
+	var state_machine_node = Node.new()
+	state_machine_node.name = "StateMachine"
+	state_machine_node.set_script(state_machine_script)
+
+	var state_idle_node = Node.new()
+	state_idle_node.name = "Idle"
+	state_idle_node.set_script(state_idle_script)
+	state_machine_node.add_child(state_idle_node)
+
+	var state_move_node = Node.new()
+	state_move_node.name = "Moving"
+	state_move_node.set_script(state_move_script)
+	state_machine_node.add_child(state_move_node)
+
+	var state_auto_attack_node = Node.new()
+	state_auto_attack_node.name = "Attacking"
+	state_auto_attack_node.set_script(state_auto_attack_script)
+	state_machine_node.add_child(state_auto_attack_node)
+
+	add_child(state_machine_node)
+
+	# set up the abilities
+	var abilities_node = Node.new()
+	abilities_node.name = "Abilities"
+
+	var auto_attack_node = Node.new()
+	auto_attack_node.name = "AutoAttack"
+
+	var aa_windup_node = Timer.new()
+	aa_windup_node.name = "AAWindup"
+	aa_windup_node.one_shot = true
+	aa_windup_node.process_callback = Timer.TIMER_PROCESS_PHYSICS
+	auto_attack_node.add_child(aa_windup_node)
+
+	var aa_cooldown_node = Timer.new()
+	aa_cooldown_node.name = "AACooldown"
+	aa_cooldown_node.one_shot = true
+	aa_cooldown_node.process_callback = Timer.TIMER_PROCESS_PHYSICS
+	auto_attack_node.add_child(aa_cooldown_node)
+
+	abilities_node.add_child(auto_attack_node)
+	add_child(abilities_node)
+
+	# set up projectile spawning
+	var projectiles_node = Node.new()
+	projectiles_node.name = "Projectiles"
+	add_child(projectiles_node)
+
+	var projectile_spawner_node = MultiplayerSpawner.new()
+	projectile_spawner_node.name = "ProjectileSpawner"
+	projectile_spawner_node.add_spawnable_scene("res://scenes/projectiles/arrow.tscn")
+	projectile_spawner_node.spawn_limit = 999
+	projectile_spawner_node.spawn_path = NodePath("../Projectiles")
+	add_child(projectile_spawner_node)
+
+	# set up the navitation agent
+	var _nav_agent = NavigationAgent3D.new()
+	_nav_agent.name = "NavigationAgent3D"
+	add_child(_nav_agent)
+	nav_agent = get_node("NavigationAgent3D")
+
+	# set up the healthbar
+	var healthbar_node = healthbar_scene.instantiate()
+	healthbar_node.name = "Healthbar"
+	add_child(healthbar_node)
+	healthbar = get_node("Healthbar")
+
 
 
 # Movement

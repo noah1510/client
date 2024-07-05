@@ -49,7 +49,7 @@ static func _get_child_node(node_name: String, parent: Node):
 static func _get_position(node_name: String, parent: Node, fallback_data: Dictionary):
 	var feature_node = _get_child_node(node_name, parent)
 	if feature_node != null:
-		var _pos = feature_node.position
+		var _pos := Vector3(feature_node.position)
 		parent.remove_child(feature_node)
 		return _pos
 
