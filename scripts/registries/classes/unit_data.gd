@@ -1,6 +1,15 @@
 extends Object
 class_name UnitData
 
+enum AggroType {
+	# Doesn't attack.
+	PASSIVE,
+	# Attacks when attacked.
+	NEUTRAL,
+	# Attacks anything not on its team.
+	AGGRESSIVE,
+}
+
 var stats = StatCollection.new()
 var stat_growth = StatCollection.new()
 
@@ -8,9 +17,13 @@ var id: Identifier
 var model_id: Identifier
 var icon_id: Identifier
 
+var tags: Array[String] = []
+
 var is_character: bool = false
 
-var tags: Array[String] = []
+var aggro_type: AggroType
+var aggro_distance: float = 1.0
+var deaggro_distance: float = 3.0
 
 
 static func from_dict(_json: Dictionary, _registry: RegistryBase):
@@ -110,6 +123,36 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 	)
 	new_unit.is_character = _is_character
 
+	if _json_data.has("aggro_type"):
+		var raw_aggro_type = _json_data["aggro_type"]
+
+		match str(raw_aggro_type):
+			"passive":
+				new_unit.aggro_type = AggroType.PASSIVE
+			"neutral":
+				new_unit.aggro_type = AggroType.NEUTRAL
+			"aggressive":
+				new_unit.aggro_type = AggroType.AGGRESSIVE
+			_:
+				print("Unit (%s): Invalid aggro_type: %s" % [_unit_id_str, str(raw_aggro_type)])
+				new_unit.aggro_type = AggroType.PASSIVE
+
+	if _json_data.has("aggro_distance"):
+		var raw_aggro_distance = _json_data["aggro_distance"]
+		if raw_aggro_distance is float:
+			new_unit.aggro_distance = raw_aggro_distance
+		else:
+			print("Unit (%s): aggro_distance must be a float. using default" % _unit_id_str)
+			new_unit.aggro_distance = 1.0
+	
+	if _json_data.has("deaggro_distance"):
+		var raw_deaggro_distance = _json_data["deaggro_distance"]
+		if raw_deaggro_distance is float:
+			new_unit.deaggro_distance = raw_deaggro_distance
+		else:
+			print("Unit (%s): deaggro_distance must be a float. using default" % _unit_id_str)
+			new_unit.deaggro_distance = 3.0
+
 	return new_unit
 
 
@@ -157,37 +200,40 @@ func spawn(spawn_args: Dictionary):
 		print("Character (%s): Failed to load model." % id.to_string())
 		return null
 
-	var character = model_scene.instantiate()
-	if character == null:
+	var _unit = model_scene.instantiate()
+	if _unit == null:
 		print("Character (%s): Failed to instantiate model." % id.to_string())
 		return null
 
-	character.name = spawn_args["name"]
-	character.id = spawn_args["id"]
-	character.nametag = spawn_args["nametag"]
-	character.team = spawn_args["team"]
-	character.position = spawn_args["position"]
+	_unit.name = spawn_args["name"]
+	_unit.nametag = spawn_args["nametag"]
+	_unit.team = spawn_args["team"]
+	_unit.position = spawn_args["position"]
 
-	character.server_position = character.position
+	_unit.server_position = _unit.position
 
-	character.maximum_stats = stats.get_copy()
-	character.current_stats = stats.get_copy()
-	character.per_level_stats = stat_growth.get_copy()
-	character.unit_id = id.to_string()
+	_unit.maximum_stats = stats.get_copy()
+	_unit.current_stats = stats.get_copy()
+	_unit.per_level_stats = stat_growth.get_copy()
+	_unit.unit_id = id.to_string()
 
 	if is_character:
 		# set the character's script and set all the values
 		#character.set_script("res://classes/character.gd")
 
-		character.has_mana = true
-		character.player_controlled = true
-
-		# Add all the common components
+		_unit.id = spawn_args["id"]
+		_unit.has_mana = true
+		_unit.player_controlled = true
 	else:
-		# TODO: handle npc unit spawning
-		pass
+		var unit_controller = NPC_Controller.new()
+		unit_controller.aggro_type = aggro_type
+		unit_controller.aggro_distance = aggro_distance
+		unit_controller.deaggro_distance = deaggro_distance
+		unit_controller.controlled_unit = _unit
 
-	return character
+		_unit.add_child(unit_controller)
+
+	return _unit
 
 
 func _init(

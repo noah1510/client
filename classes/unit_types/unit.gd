@@ -249,9 +249,24 @@ func move_on_path(delta: float):
 	move_and_slide()
 
 
-func _trigger_ability(_index: int):
+func trigger_ability(_index: int):
 	if not can_cast(): return
-	pass
+	
+	# check if the ability exists
+	var abilities_node = get_node("Abilities")
+	if abilities_node == null:
+		print("Abilities node not found.")
+		return
+
+	if _index >= abilities_node.get_child_count():
+		print("Ability (%s) larger than the amount of known abilities (%s)." % [str(_index), str(abilities_node.get_child_count())])
+		return
+
+	var ability_node = get_node("Abilities").get_child(_index)
+	if ability_node == null:
+		print("Ability not found (%s)." % str(_index))
+		return
+	
 
 
 func apply_effect(effect: UnitEffect):

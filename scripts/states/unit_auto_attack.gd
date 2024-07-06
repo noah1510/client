@@ -8,9 +8,11 @@ var this_entity: Unit
 
 func enter(entity: Unit, _args = null):
 	this_entity = entity
+
 	# Configure Timers
-	windup_timer = entity.get_node("Timers/AAWindup")
-	cooldown_timer = entity.get_node("Timers/AACooldown")
+	windup_timer = entity.get_node("Abilities/AutoAttack/AAWindup")
+	cooldown_timer = entity.get_node("Abilities/AutoAttack/AACooldown")
+
 	# Subscribe to timer timeout
 	windup_timer.timeout.connect(do_attack)
 
@@ -30,12 +32,15 @@ func update_tick_server(entity: Unit, delta):
 	if not entity.target_entity: 
 		entity.change_state("Idle", null)
 		return
+	
 	if entity.target_entity.health <= 0: 
 		entity.change_state("Idle", null)
 		return
+	
 	if entity.distance_to(entity.target_entity) <= entity.attack_range:
 		start_windup()
 		return
+	
 	entity.nav_agent.target_position = entity.target_entity.global_position
 	entity.move_on_path(delta)
 

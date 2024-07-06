@@ -76,10 +76,6 @@ func _setup_nodes():
 	
 	add_child(character_spawner)
 	
-	var minions_node = Node.new()
-	minions_node.name = "Minions"
-	add_child(minions_node)
-	
 	var abilities_node = Node.new()
 	abilities_node.name = "Abilities"
 	add_child(abilities_node)
