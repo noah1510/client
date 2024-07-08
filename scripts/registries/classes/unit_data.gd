@@ -206,7 +206,6 @@ func spawn(spawn_args: Dictionary):
 		return null
 
 	_unit.name = spawn_args["name"]
-	_unit.nametag = spawn_args["nametag"]
 	_unit.team = spawn_args["team"]
 	_unit.position = spawn_args["position"]
 
@@ -221,6 +220,7 @@ func spawn(spawn_args: Dictionary):
 		# set the character's script and set all the values
 		#character.set_script("res://classes/character.gd")
 
+		_unit.nametag = spawn_args["nametag"]
 		_unit.id = spawn_args["id"]
 		_unit.has_mana = true
 		_unit.player_controlled = true

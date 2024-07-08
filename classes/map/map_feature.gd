@@ -4,7 +4,7 @@ class_name MapFeature
 
 var feature_type: String = ""
 var feature_name: String = ""
-
+var map: Node
 
 static func spawn_feature(feature_data: Dictionary, parent: Node) -> bool:
 	if not feature_data.has("type"):
@@ -15,8 +15,8 @@ static func spawn_feature(feature_data: Dictionary, parent: Node) -> bool:
 	match feature_data["type"]:
 		"player_spawn":
 			feature = PlayerSpawnerFeature.new()
-		#"unit_spawn":
-		#	feature = UnitSpawner.new()
+		"unit_spawn":
+			feature = UnitSpawnerFeature.new()
 		_:
 			print("Unknown feature type: " + feature_data["type"])
 			return false
@@ -29,6 +29,7 @@ static func spawn_feature(feature_data: Dictionary, parent: Node) -> bool:
 		print("Failed to spawn feature")
 		return false
 
+	feature.map = parent
 	parent.map_features.add_child(feature)
 
 	return true
