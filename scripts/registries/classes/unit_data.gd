@@ -21,6 +21,15 @@ var tags: Array[String] = []
 
 var is_character: bool = false
 
+var kill_exp: int = 0
+var kill_gold: int = 0
+
+var exp_per_second: float = 0.0
+var gold_per_second: float = 0.0
+
+var spawn_exp: int = 0
+var spawn_gold: int = 0
+
 var aggro_type: AggroType
 var aggro_distance: float = 1.0
 var deaggro_distance: float = 3.0
@@ -85,21 +94,27 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 		else:
 			_unit_icon_id = Identifier.for_resource("texture://" + _unit_id.get_group() + ":units/" + _unit_id.get_name() + "/icon")
 
+
+	var new_unit = UnitData.new(
+		_unit_id,
+		_unit_model_id,
+		_unit_icon_id
+	)
+
 	var raw_stats = _json_data["base_stats"]
 	if not (raw_stats is Dictionary):
 		print("Unit (%s): base_stats must be a dictionary." % _unit_id_str)
 		return false
 
-	var _stats = StatCollection.from_dict(raw_stats)
+	new_unit.stats = StatCollection.from_dict(raw_stats)
 
 	var raw_stat_growth = _json_data["stat_growth"]
 	if not (raw_stat_growth is Dictionary):
 		print("Unit (%s): stat_growth must be a dictionary." % _unit_id_str)
 		return false
 
-	var _stat_growth = StatCollection.from_dict(raw_stat_growth)
+	new_unit.stat_growth = StatCollection.from_dict(raw_stat_growth)
 
-	var _tags: Array[String] = []
 	if _json_data.has("tags"):
 		var raw_tags = _json_data["tags"]
 		if not (raw_tags is Array):
@@ -111,17 +126,57 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 				print("Unit (%s): tag must be a string, got %s." % [_unit_id_str, str(tag)])
 				continue
 
-			_tags.append(tag)
+			new_unit.tags.append(tag)
 
-	var new_unit = UnitData.new(
-		_unit_id,
-		_unit_model_id,
-		_unit_icon_id,
-		_stats,
-		_stat_growth,
-		_tags
-	)
 	new_unit.is_character = _is_character
+
+	if _json_data.has("kill_exp"):
+		var raw_kill_exp = _json_data["kill_exp"]
+		if raw_kill_exp is float:
+			new_unit.kill_exp = int(raw_kill_exp)
+		else:
+			print("Unit (%s): kill_exp must be a number (int). using default" % _unit_id_str)
+			new_unit.kill_exp = 0
+
+	if _json_data.has("kill_gold"):
+		var raw_kill_gold = _json_data["kill_gold"]
+		if raw_kill_gold is float:
+			new_unit.kill_gold = int(raw_kill_gold)
+		else:
+			print("Unit (%s): kill_gold must be a number (int). using default" % _unit_id_str)
+			new_unit.kill_gold = 0
+
+	if _json_data.has("exp_per_second"):
+		var raw_exp_per_second = _json_data["exp_per_second"]
+		if raw_exp_per_second is float:
+			new_unit.exp_per_second = raw_exp_per_second
+		else:
+			print("Unit (%s): exp_per_second must be a float. using default" % _unit_id_str)
+			new_unit.exp_per_second = 0.0
+
+	if _json_data.has("gold_per_second"):
+		var raw_gold_per_second = _json_data["gold_per_second"]
+		if raw_gold_per_second is float:
+			new_unit.gold_per_second = raw_gold_per_second
+		else:
+			print("Unit (%s): gold_per_second must be a float. using default" % _unit_id_str)
+			new_unit.gold_per_second = 0.0
+
+	if _json_data.has("spawn_exp"):
+		var raw_spawn_exp = _json_data["spawn_exp"]
+		if raw_spawn_exp is float:
+			new_unit.spawn_exp = raw_spawn_exp
+		else:
+			print("Unit (%s): spawn_exp must be a number (int). using default" % _unit_id_str)
+			new_unit.spawn_exp = 0
+
+	if _json_data.has("spawn_gold"):
+		var raw_spawn_gold = _json_data["spawn_gold"]
+		if raw_spawn_gold is float:
+			new_unit.spawn_gold = raw_spawn_gold
+		else:
+			print("Unit (%s): spawn_gold must be a number (int). using default" % _unit_id_str)
+			new_unit.spawn_gold = 0
 
 	if _json_data.has("aggro_type"):
 		var raw_aggro_type = _json_data["aggro_type"]
@@ -216,6 +271,12 @@ func spawn(spawn_args: Dictionary):
 	_unit.per_level_stats = stat_growth.get_copy()
 	_unit.unit_id = id.to_string()
 
+	_unit.dropped_exp = kill_exp
+	_unit.dropped_gold = kill_gold
+
+	_unit.exp_per_second = exp_per_second
+	_unit.gold_per_second = gold_per_second
+
 	if spawn_args.has("index"):
 		_unit.index = spawn_args["index"]
 
@@ -223,6 +284,12 @@ func spawn(spawn_args: Dictionary):
 		var level_incrrement = int(spawn_args["level"]) - _unit.level
 		if level_incrrement > 0:
 			_unit.level_up(level_incrrement)
+
+	if spawn_exp > 0:
+		_unit.give_exp(spawn_exp)
+
+	if spawn_gold > 0:
+		_unit.give_gold(spawn_gold)
 
 	if is_character:
 		# set the character's script and set all the values
@@ -249,13 +316,7 @@ func _init(
 	_id: Identifier,
 	_model_id: Identifier,
 	_icon_id: Identifier,
-	_stats: StatCollection,
-	_stat_growth: StatCollection,
-	_tags: Array[String]
 ):
 	id = _id
 	model_id = _model_id
 	icon_id = _icon_id
-	stats = _stats
-	stat_growth = _stat_growth
-	tags = _tags

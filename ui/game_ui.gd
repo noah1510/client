@@ -3,6 +3,7 @@ extends Node
 @export var _map : Node
 
 @onready var player_icon = $CharacterUI/Portrait
+@onready var money_count = $GameStats/Money
 
 var _character
 
@@ -17,6 +18,19 @@ func _ready() -> void:
 	# Todo get the current player and set the icons to the
 	# the ones for the actual character of the current player
 	call_deferred("_set_icons")
+
+
+func _process(delta: float) -> void:
+	if Config.is_dedicated_server:
+		return
+
+	if _character == null:
+		call_deferred("_set_icons")
+
+	if _character == null:
+		return
+
+	money_count.text = str(_character.current_gold)
 
 
 func _set_icons():

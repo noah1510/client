@@ -32,6 +32,14 @@ var current_shielding: int = 0
 var turn_speed: float = 15.0
 
 var level : int = 1
+var level_exp : int = 0
+var required_exp : int = 100
+var dropped_exp : int = 0
+var exp_per_second: float = 0
+
+var current_gold : int = 0
+var dropped_gold : int = 0
+var gold_per_second : float = 0
 
 @export var unit_id : String = ""
 @export var is_alive : bool = true
@@ -82,6 +90,8 @@ func _init():
 
 	if per_level_stats == null:
 		per_level_stats = StatCollection.new()
+
+	required_exp = get_exp_for_levelup(level + 1)
 
 
 func _ready():
@@ -188,6 +198,59 @@ func level_up(times: int = 1):
 	maximum_stats.add(per_level_stats, times)
 	current_stats.add(per_level_stats, times)
 	level += times
+	required_exp = get_exp_for_levelup(level + 1)
+
+
+func give_exp(amount: int):
+	level_exp += amount
+	
+	while level_exp >= required_exp:
+		level_up()
+		level_exp -= required_exp
+
+
+func reward_exp_on_death():
+	var exp_reward_shape = CylinderShape3D.new()
+	# set the radius in which all units will be rewarded experience
+	exp_reward_shape.radius = 100.0
+
+	var exp_reward_collision = CollisionShape3D.new()
+	exp_reward_collision.shape = exp_reward_shape
+
+	var exp_reward_collider = Area3D.new()
+	exp_reward_collider.name = "ExpRewardCollider"
+	exp_reward_collider.add_child(exp_reward_collision)
+
+	exp_reward_collider.body_entered.connect(
+		func (body):
+			var _unit = body as Unit
+			if _unit == null: return
+			if _unit.team == team: return
+			if not _unit.is_alive: return
+			_unit.give_exp(dropped_exp)
+	)
+	add_child(exp_reward_collider)
+
+	# remove the collider after 1 second
+	get_tree().create_timer(1).timeout.connect(
+		func ():
+			remove_child(exp_reward_collider)
+			exp_reward_collider.queue_free()
+	)
+
+
+## This function returns the amount of experience required to level up.
+## The returned value is the difference in exp needed to level up from
+## _level-1 to _level.
+## At the moment, the exp required to level up is 100 * _level.
+static func get_exp_for_levelup(_level: int) -> int:
+	return 100 * _level
+
+
+# Gold related things
+func give_gold(amount: int):
+	current_gold += amount
+
 
 # Movement
 func update_target_location(target_location: Vector3):
@@ -228,9 +291,11 @@ func heal(amount:float, keep_extra:bool = false):
 
 func die():
 	is_alive = false
-	get_tree().quit()
 
+	reward_exp_on_death()
 	died.emit()
+
+	get_tree().quit()
 
 	if team > 0:
 		pass
