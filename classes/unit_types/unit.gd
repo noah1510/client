@@ -127,6 +127,7 @@ func _ready():
 	var state_machine_node = Node.new()
 	state_machine_node.name = "StateMachine"
 	state_machine_node.set_script(state_machine_script)
+	state_machine_node.print_state_changes = player_controlled
 
 	var state_idle_node = Node.new()
 	state_idle_node.name = "Idle"
@@ -336,7 +337,6 @@ func trigger_ability(_index: int):
 	if ability_node == null:
 		print("Ability not found (%s)." % str(_index))
 		return
-	
 
 
 func apply_effect(effect: UnitEffect):

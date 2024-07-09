@@ -226,25 +226,35 @@ func move_to(pos: Vector3):
 
 
 @rpc("any_peer", "call_local")
-func target(target_name):
+func target(target_path):
 	var character = get_character(multiplayer.get_remote_sender_id())
+
+	var target_unit = get_node(target_path) as Unit
+	if not target_unit:
+		print_debug("Failed to find target: " + target_path)
+		return
+
 	# Dont Kill Yourself
-	if target_name == character.name:
+	if target_unit == character:
 		print_debug("That's you ya idjit") # :O
 		return
-	character.change_state("Attacking", target_name)
+
+	character.change_state("Attacking", target_unit)
 
 
 @rpc("any_peer", "call_local")
 func spawn_ability(ability_name, ability_type, ability_pos, ability_mana_cost, cooldown, ab_id):
 	var peer_id = multiplayer.get_remote_sender_id()
 	var character = get_character(peer_id)
+
 	if character.mana < ability_mana_cost:
 		print("Not enough mana!")
 		return
+
 	if player_cooldowns[peer_id][ab_id-1] != 0:
 		print("This ability is on cooldown! Wait " + str(cooldown) + " seconds!")
 		return
+	
 	player_cooldowns[peer_id][ab_id-1] = cooldown
 	free_ability(cooldown, peer_id, ab_id-1)
 	character.mana -= ability_mana_cost

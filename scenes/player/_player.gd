@@ -14,7 +14,7 @@ var initial_mouse_position := Vector2.ZERO
 var is_middle_mouse_dragging := false
 var is_right_mouse_dragging := false
 var is_left_mouse_dragging := false
-var character : CharacterUnit
+var character : Unit
 
 @onready var marker = MoveMarker.instantiate();
 #@export var player := 1:
@@ -104,9 +104,15 @@ func player_action(event, play_marker: bool=false, attack_move: bool=false):
 
 
 func _player_action_attack(collider):
-	if not collider is Unit: return
-	if collider.team == get_character(multiplayer.get_unique_id()).team: return
-	server_listener.rpc_id(get_multiplayer_authority(), "target", collider.name)
+	var colliding_unit = collider as Unit
+	if not colliding_unit:
+		return
+	
+	if colliding_unit.team == get_character(multiplayer.get_unique_id()).team:
+		return
+	
+	var target_path = str(colliding_unit.get_path())
+	server_listener.rpc_id(get_multiplayer_authority(), "target", target_path)
 
 
 func _player_action_move(result, play_marker: bool, attack_move: bool):

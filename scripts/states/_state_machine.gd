@@ -1,8 +1,11 @@
 extends Node
 
+@export var print_state_changes: bool = true
 @export var initial_state: State
+
 var current_state: State
 var states: Dictionary = {}
+
 @onready var entity = get_parent();
 
 
@@ -35,11 +38,14 @@ func change_state(new_state_name, args = null):
 	
 	var new_state = states[new_state_name]
 	if current_state == new_state:
-		print("Updating state " + new_state_name + " of "  + entity.name)
+		if print_state_changes:
+			print("Updating state " + new_state_name + " of "  + entity.name)
+		
 		current_state.modify(entity, args)
 		return
-		
-	print("Changing " + entity.name + " to " + new_state_name)
+	
+	if print_state_changes:
+		print("Changing " + entity.name + " to " + new_state_name)
 	
 	if current_state != null:
 		current_state.exit(entity)

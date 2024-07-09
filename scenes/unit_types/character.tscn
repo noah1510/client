@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://cvb2x4ircsoxh"]
 
 [ext_resource type="PackedScene" path="res://scenes/unit_types/unit.tscn" id="1_cybpu"]
-[ext_resource type="Script" path="res://classes/unit_types/character_unit.gd" id="2_iykai"]
+[ext_resource type="Script" path="res://classes/unit_types/unit.gd" id="2_iykai"]
 
 [node name="Character" instance=ExtResource("1_cybpu")]
 script = ExtResource("2_iykai")

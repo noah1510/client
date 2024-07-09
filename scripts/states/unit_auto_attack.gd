@@ -3,21 +3,44 @@ class_name unit_auto_attack
 
 var windup_timer: Timer
 var cooldown_timer: Timer
-var this_entity: Unit
+var target_unit: Unit
 
 
 func enter(entity: Unit, _args = null):
-	this_entity = entity
-
 	# Configure Timers
 	windup_timer = entity.get_node("Abilities/AutoAttack/AAWindup")
 	cooldown_timer = entity.get_node("Abilities/AutoAttack/AACooldown")
 
 	# Subscribe to timer timeout
-	windup_timer.timeout.connect(do_attack)
+	windup_timer.timeout.connect(
+		func(): do_attack(entity)
+	)
+
+	modify(entity, _args)
 
 
-func exit(entity: Unit):
+func modify(entity: Unit, _args = null):
+	if _args == null:
+		print("No target entity provided")
+		return
+
+	var _unit = _args as Unit
+	if not _unit:
+		print("No target doesn't seem to be a unit")
+		return
+	
+	target_unit = _unit
+
+	if target_unit != entity.target_entity:
+		entity.target_entity = target_unit
+	
+	if not target_unit.is_alive:
+		print("Target is dead, going back to idle state")
+		entity.change_state("Idle", null)
+		return
+		
+
+func exit(_entity: Unit):
 	windup_timer.timeout.disconnect(do_attack)
 
 
@@ -33,25 +56,34 @@ func update_tick_server(entity: Unit, delta):
 		entity.change_state("Idle", null)
 		return
 	
-	if entity.target_entity.health <= 0: 
+	if entity.target_entity.current_stats.health_max <= 0: 
 		entity.change_state("Idle", null)
 		return
 	
-	if entity.distance_to(entity.target_entity) <= entity.attack_range:
-		start_windup()
+	var target_distance = entity.position.distance_to(entity.target_entity.position)
+	if target_distance <= entity.current_stats.attack_range:
+		start_windup(entity)
 		return
 	
 	entity.nav_agent.target_position = entity.target_entity.global_position
 	entity.move_on_path(delta)
 
 
-func start_windup():
-	if not this_entity.can_attack(): return
+func start_windup(entity):
+	if not entity.can_attack(): return
 	if not windup_timer.is_stopped(): return
 	if not cooldown_timer.is_stopped(): return
+
+	# 1/2 of the attack duration is the windup time
+	windup_timer.wait_time = (1.0 / entity.current_stats.attack_speed) / 2.0
 	windup_timer.start()
 
 
-func do_attack():
-	if not this_entity.can_attack(): return
+func do_attack(entity):
+	if not entity.can_attack(): return
+
+	# TODO: Actually do the attack
+
+	# The other 1/2 of the attack duration is the cooldown time
+	cooldown_timer.wait_time = (1.0 / entity.current_stats.attack_speed) / 2.0
 	cooldown_timer.start()
