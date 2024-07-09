@@ -10,6 +10,12 @@ class_name StatCollection
 @export var armor: int = 0
 @export var magic_resist: int = 0
 
+@export var armor_pen_flat: int = 0
+@export var armor_pen_percent: float = 0
+
+@export var magic_pen_flat: int = 0
+@export var magic_pen_percent: float = 0
+
 @export var attack_damage: int = 0
 @export var attack_speed: float = 0
 @export var attack_range: float = 0
@@ -40,6 +46,20 @@ static func from_dict(json_data_object: Dictionary) -> StatCollection:
 
     if json_data_object.has("magic_resist"):
         stat.magic_resist = int(json_data_object["magic_resist"])
+    
+
+    if json_data_object.has("armor_pen_flat"):
+        stat.armor_pen_flat = int(json_data_object["armor_pen_flat"])
+
+    if json_data_object.has("armor_pen_percent"):
+        stat.armor_pen_percent = float(json_data_object["armor_pen_percent"])
+
+
+    if json_data_object.has("magic_pen_flat"):
+        stat.magic_pen_flat = int(json_data_object["magic_pen_flat"])
+
+    if json_data_object.has("magic_pen_percent"):
+        stat.magic_pen_percent = float(json_data_object["magic_pen_percent"])
     
 
     if json_data_object.has("attack_damage"):
@@ -80,6 +100,12 @@ func add(other: StatCollection, times: int = 1):
     armor += other.armor * times
     magic_resist += other.magic_resist * times
 
+    armor_pen_flat += other.armor_pen_flat * times
+    armor_pen_percent += other.armor_pen_percent * times
+
+    magic_pen_flat += other.magic_pen_flat * times
+    magic_pen_percent += other.magic_pen_percent * times
+
     attack_damage += other.attack_damage * times
     attack_speed += other.attack_speed * times
     attack_range += other.attack_range * times
@@ -99,6 +125,12 @@ func clamp_self(_min: StatCollection, _max: StatCollection):
 
     armor = new_vals.armor
     magic_resist = new_vals.magic_resist
+
+    armor_pen_flat = new_vals.armor_pen_flat
+    armor_pen_percent = new_vals.armor_pen_percent
+
+    magic_pen_flat = new_vals.magic_pen_flat
+    magic_pen_percent = new_vals.magic_pen_percent
 
     attack_damage = new_vals.attack_damage
     attack_speed = new_vals.attack_speed
@@ -123,6 +155,12 @@ static func clamp(_stat: StatCollection, _min: StatCollection, _max: StatCollect
 
     stat.armor = clamp(_stat.armor, _min.armor, _max.armor)
     stat.magic_resist = clamp(_stat.magic_resist, _min.magic_resist, _max.magic_resist)
+
+    stat.armor_pen_flat = clamp(_stat.armor_pen_flat, _min.armor_pen_flat, _max.armor_pen_flat)
+    stat.armor_pen_percent = clamp(_stat.armor_pen_percent, _min.armor_pen_percent, _max.armor_pen_percent)
+
+    stat.magic_pen_flat = clamp(_stat.magic_pen_flat, _min.magic_pen_flat, _max.magic_pen_flat)
+    stat.magic_pen_percent = clamp(_stat.magic_pen_percent, _min.magic_pen_percent, _max.magic_pen_percent)
 
     stat.attack_damage = clamp(_stat.attack_damage, _min.attack_damage, _max.attack_damage)
     stat.attack_speed = clamp(_stat.attack_speed, _min.attack_speed, _max.attack_speed)

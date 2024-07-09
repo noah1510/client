@@ -17,6 +17,8 @@ var id: Identifier
 var model_id: Identifier
 var icon_id: Identifier
 
+var projectile_config: Dictionary
+
 var tags: Array[String] = []
 
 var is_character: bool = false
@@ -178,6 +180,39 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 			print("Unit (%s): spawn_gold must be a number (int). using default" % _unit_id_str)
 			new_unit.spawn_gold = 0
 
+	if _json_data.has("attack_projectile"):
+		var _projectile_config = {}
+		var raw_projectile_config = _json_data["attack_projectile"]
+		if raw_projectile_config is Dictionary:
+			_projectile_config["model"] = str(raw_projectile_config["model"])
+			_projectile_config["speed"] = float(raw_projectile_config["speed"])
+			
+			var model_scale = Vector3(1.0, 1.0, 1.0)
+			if raw_projectile_config.has("model_scale"):
+				var raw_model_scale = raw_projectile_config["model_scale"]
+				if raw_model_scale.has("x"):
+					model_scale.x = float(raw_model_scale["x"])
+				if raw_model_scale.has("y"):
+					model_scale.y = float(raw_model_scale["y"])
+				if raw_model_scale.has("z"):
+					model_scale.z = float(raw_model_scale["z"])
+
+			_projectile_config["model_scale"] = model_scale
+
+			var model_rotation = Vector3(0.0, 0.0, 0.0)
+			if raw_projectile_config.has("model_rotation"):
+				var raw_model_rotation = raw_projectile_config["model_rotation"]
+				if raw_model_rotation.has("x"):
+					model_rotation.x = float(raw_model_rotation["x"])
+				if raw_model_rotation.has("y"):
+					model_rotation.y = float(raw_model_rotation["y"])
+				if raw_model_rotation.has("z"):
+					model_rotation.z = float(raw_model_rotation["z"])
+
+			_projectile_config["model_rotation"] = model_rotation
+
+			new_unit.projectile_config = _projectile_config
+
 	if _json_data.has("aggro_type"):
 		var raw_aggro_type = _json_data["aggro_type"]
 
@@ -263,6 +298,7 @@ func spawn(spawn_args: Dictionary):
 	_unit.name = spawn_args["name"]
 	_unit.team = spawn_args["team"]
 	_unit.position = spawn_args["position"]
+	_unit.projectile_config = projectile_config
 
 	_unit.server_position = _unit.position
 

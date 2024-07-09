@@ -4,6 +4,7 @@ extends Node
 
 @onready var player_icon = $CharacterUI/Portrait
 @onready var money_count = $GameStats/Money
+@onready var kda_display = $GameStats/KDA
 
 var _character
 
@@ -31,6 +32,7 @@ func _process(delta: float) -> void:
 		return
 
 	money_count.text = str(_character.current_gold)
+	kda_display.text = str(_character.kills) + "/" + str(_character.deaths) + "/" + str(_character.assists)
 
 
 func _set_icons():

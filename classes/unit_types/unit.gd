@@ -5,23 +5,15 @@ class_name Unit
 # Signals
 signal died
 
-# General Stats:
+# constant unit variables
 @export var id: int
 @export var team: int
 @export var index: int = 0
 @export var nametag: String
 @export var player_controlled: bool = false
-# Defensive Stats:
+@export var unit_id : String = ""
 
-#@export var magic_resist:float = 20.0
-
-# Offensive Stats:
-#@export var attack_windup: float = 0.2
-#@export var attack_time: float = 0.1
-#@export var critical_chance: float = 0.0
-#@export var critical_damage: float = 100
-
-
+# Stats:
 var maximum_stats: StatCollection
 var current_stats: StatCollection
 var per_level_stats: StatCollection
@@ -29,6 +21,7 @@ var per_level_stats: StatCollection
 var has_mana: bool = false
 
 var current_shielding: int = 0
+
 var turn_speed: float = 15.0
 
 var level : int = 1
@@ -41,8 +34,11 @@ var current_gold : int = 0
 var dropped_gold : int = 0
 var gold_per_second : float = 0
 
-@export var unit_id : String = ""
-@export var is_alive : bool = true
+var is_alive : bool = true
+
+var kills : int = 0
+var deaths : int = 0
+var assists : int = 0
 
 # Each bit of cc_state represents a different type of crowd control.
 var cc_state: int = 0
@@ -53,8 +49,11 @@ var server_position
 
 var nav_agent : NavigationAgent3D
 
+var map : Node = null
+var projectile_config : Dictionary
+var projectile_spawner : MultiplayerSpawner
+
 # UI
-@export var projectile_scene: PackedScene = null
 var healthbar : ProgressBar
 
 # Preloaded scripts and scenes
@@ -176,10 +175,11 @@ func _ready():
 
 	var projectile_spawner_node = MultiplayerSpawner.new()
 	projectile_spawner_node.name = "ProjectileSpawner"
-	projectile_spawner_node.add_spawnable_scene("res://scenes/projectiles/arrow.tscn")
 	projectile_spawner_node.spawn_limit = 999
 	projectile_spawner_node.spawn_path = NodePath("../Projectiles")
+	projectile_spawner_node.spawn_function = spawn_projectile
 	add_child(projectile_spawner_node)
+	projectile_spawner = get_node("ProjectileSpawner")
 
 	# set up the navitation agent
 	var _nav_agent = NavigationAgent3D.new()
@@ -192,6 +192,27 @@ func _ready():
 	healthbar_node.name = "Healthbar"
 	add_child(healthbar_node)
 	healthbar = get_node("Healthbar")
+
+
+func spawn_projectile(_args):
+	if not projectile_config:
+		print("Projectile config not set.")
+		return null
+	
+	var _projectile = Projectile.new()
+
+	_projectile.caster = self
+	_projectile.position = server_position
+	_projectile.target = target_entity
+
+	_projectile.model = projectile_config["model"]
+	_projectile.model_scale = projectile_config["model_scale"]
+	_projectile.model_rotation = projectile_config["model_rotation"]
+	_projectile.speed = projectile_config["speed"]
+
+	_projectile.is_crit = should_crit()
+
+	return _projectile
 
 
 # Stats related things
@@ -210,7 +231,7 @@ func give_exp(amount: int):
 		level_exp -= required_exp
 
 
-func reward_exp_on_death():
+func reward_exp_on_death(murderer = null):
 	var exp_reward_shape = CylinderShape3D.new()
 	# set the radius in which all units will be rewarded experience
 	exp_reward_shape.radius = 100.0
@@ -221,23 +242,39 @@ func reward_exp_on_death():
 	var exp_reward_collider = Area3D.new()
 	exp_reward_collider.name = "ExpRewardCollider"
 	exp_reward_collider.add_child(exp_reward_collision)
-
-	exp_reward_collider.body_entered.connect(
-		func (body):
-			var _unit = body as Unit
-			if _unit == null: return
-			if _unit.team == team: return
-			if not _unit.is_alive: return
-			_unit.give_exp(dropped_exp)
-	)
 	add_child(exp_reward_collider)
 
-	# remove the collider after 1 second
-	get_tree().create_timer(1).timeout.connect(
-		func ():
-			remove_child(exp_reward_collider)
-			exp_reward_collider.queue_free()
-	)
+	var rewarded_units : Array[Unit] = []
+	if murderer != null:
+		rewarded_units.append(murderer)
+
+	var bodies = exp_reward_collider.get_overlapping_bodies()
+	for body in bodies:
+		var _unit = body as Unit
+		if _unit == null: continue
+		if _unit.team == team: continue
+		if not _unit.is_alive: continue
+		if _unit == murderer: continue
+		
+		rewarded_units.append(_unit)
+	
+	exp_reward_collider.queue_free()
+	
+	if rewarded_units.size() == 0:
+		return
+
+	var unit_share_factor = 1.0 + 3.0 * log(float(rewarded_units.size()))
+	var per_unit_exp = int(dropped_exp / unit_share_factor)
+	var per_unit_gold = int(dropped_gold / unit_share_factor)
+
+	for _unit in rewarded_units:
+		if _unit == murderer:
+			_unit.kills += 1
+		else:
+			_unit.assists += 1
+
+		_unit.give_exp(per_unit_exp)
+		_unit.give_gold(per_unit_gold)
 
 
 ## This function returns the amount of experience required to level up.
@@ -261,16 +298,25 @@ func update_target_location(target_location: Vector3):
 
 
 ## Combat
-func take_damage(damage: float):
+func take_damage(caster: Unit, is_crit: bool):
 	if not can_take_damage(): return
 
-	var taken = float(current_stats.armor) / 100.0
-	taken = damage / (taken + 1)
+	var effective_armor = current_stats.armor
+	effective_armor *= (1.0 - caster.current_stats.armor_pen_percent / 100.0)
+	effective_armor -= caster.current_stats.armor_pen_flat
+	effective_armor = max(0, effective_armor)
+
+	var taken = float(effective_armor) / 100.0
+	taken = caster.current_stats.attack_damage / (taken + 1)
+	if is_crit:
+		taken *= (1.0 + caster.current_stats.attack_crit_damage)
 
 	var actual_damage = int(taken)
 	if current_shielding > 0:
 		current_shielding -= actual_damage
 		if current_shielding <= 0:
+			# since current_shielding is negative, we add it to
+			# health_max to subtract the remaining shielding
 			current_stats.health_max += current_shielding
 			current_shielding = 0
 	else:
@@ -278,7 +324,23 @@ func take_damage(damage: float):
 	
 	if current_stats.health_max <= 0:
 		current_stats.health_max = 0
-		die()
+		die(caster)
+
+
+func attack():
+	if projectile_config:
+		projectile_spawner.spawn()
+	else:
+		target_entity.take_damage(self, should_crit())
+
+
+func should_crit() -> bool:
+	if current_stats.attack_crit_chance < 0.0001: return false
+	if current_stats.attack_crit_chance > 0.9999: return true
+
+	var rand = RandomNumberGenerator.new()
+	rand.seed = int(map.time_elapsed*60)
+	return rand.randf() < current_stats.attack_crit_chance
 
 
 func heal(amount:float, keep_extra:bool = false):
@@ -290,16 +352,14 @@ func heal(amount:float, keep_extra:bool = false):
 	current_stats.health_max = maximum_stats.health_max
 
 
-func die():
+func die(murderer = null):
 	is_alive = false
 
-	reward_exp_on_death()
+	reward_exp_on_death(murderer)
 	died.emit()
 
-	get_tree().quit()
-
 	if team > 0:
-		pass
+		deaths += 1
 
 
 # UI

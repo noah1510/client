@@ -182,4 +182,7 @@ func _multiplayer_spawn_unit(data: Dictionary):
 		return
 
 	var _unit = _unit_data.spawn(data)
+	_unit.died.connect(
+		func(): _on_unit_death(_unit)
+	)
 	return _unit

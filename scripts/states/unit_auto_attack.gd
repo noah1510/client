@@ -41,7 +41,8 @@ func modify(entity: Unit, _args = null):
 		
 
 func exit(_entity: Unit):
-	windup_timer.timeout.disconnect(do_attack)
+	for conn in windup_timer.timeout.get_connections():
+		windup_timer.timeout.disconnect(conn["callable"])
 
 
 func update(entity: Unit, delta):
@@ -82,7 +83,7 @@ func start_windup(entity):
 func do_attack(entity):
 	if not entity.can_attack(): return
 
-	# TODO: Actually do the attack
+	entity.attack()
 
 	# The other 1/2 of the attack duration is the cooldown time
 	cooldown_timer.wait_time = (1.0 / entity.current_stats.attack_speed) / 2.0

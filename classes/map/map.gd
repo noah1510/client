@@ -259,19 +259,24 @@ func spawn_ability(ability_name, ability_type, ability_pos, ability_mana_cost, c
 	free_ability(cooldown, peer_id, ab_id-1)
 	character.mana -= ability_mana_cost
 	print(character.mana)
+
 	rpc_id(peer_id, "spawn_local_effect", ability_name, ability_type, ability_pos, character.position, character.team)
 
 
 @rpc("any_peer", "call_local")
 func spawn_local_effect(ability_name, ability_type, ability_pos, player_pos, player_team) -> void:
-	var ability_scene = load("res://effects/abilities/"+ability_name+".tscn").instantiate();
-	if ability_type == 0:
-		ability_scene.position = ability_pos
-	if ability_type == 1:
-		ability_scene.direction = ability_pos
-		ability_scene.position = player_pos
+	var ability_scene = load("res://effects/abilities/"+ability_name+".tscn").instantiate()
+
+	match ability_type:
+		0:
+			ability_scene.position = ability_pos
+		1:
+			ability_scene.direction = ability_pos
+			ability_scene.position = player_pos
+
 	ability_scene.team = player_team
-	$"../Abilities".add_child(ability_scene);
+
+	$"../Abilities".add_child(ability_scene)
 	
 
 @rpc("any_peer", "call_local")
