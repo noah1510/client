@@ -2,7 +2,7 @@ extends State
 class_name unit_move
 
 func enter(entity: Unit, args=null):
-	pass
+	modify(entity, args)
 
 
 func exit(entity: Unit):

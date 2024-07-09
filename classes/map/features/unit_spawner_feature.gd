@@ -21,6 +21,7 @@ var current_wave : int = 0
 
 var spawned_units : Node
 var spawn_timer : Timer
+var unit_multiplayer_spawner : MultiplayerSpawner
 
 
 func _init():
@@ -92,6 +93,13 @@ func spawn(feature_data: Dictionary, parent: Node) -> bool:
 	add_child(spawned_units)
 	spawned_units = get_node("SpawnedUnits")
 
+	unit_multiplayer_spawner = MultiplayerSpawner.new()
+	unit_multiplayer_spawner.name = "UnitMultiplayerSpawner"
+	unit_multiplayer_spawner.spawn_limit = 999
+	unit_multiplayer_spawner.spawn_function = _multiplayer_spawn_unit
+	unit_multiplayer_spawner.spawn_path = NodePath("../SpawnedUnits")
+	add_child(unit_multiplayer_spawner)
+
 	spawn_timer = Timer.new()
 	spawn_timer.name = "SpawnTimer"
 	spawn_timer.wait_time = initial_cooldown
@@ -146,17 +154,30 @@ func _spawn_wave():
 
 
 func _spawn_wave_unit():
-	var _unit_data = RegistryManager.units().get_element(unit_type)
-	if _unit_data == null:
-		print("Failed to get unit data")
-		return
-
 	var spawn_data = {
-		"name": name + "_unit_" + str(current_wave),
+		"unitType": unit_type,
+		"name": name + "_wave_" + str(current_wave) + "_unit_" + str(current_wave),
 		"team": team,
 		"position": position,
 		"level": _get_unit_level(map.time_elapsed),
 	}
 
-	var _unit = _unit_data.spawn(spawn_data)
-	spawned_units.add_child(_unit)
+	var _unit = unit_multiplayer_spawner.spawn(spawn_data)
+
+
+func _multiplayer_spawn_unit(data: Dictionary):
+	if data == null:
+		print("Spawn data is null")
+		return null
+
+	if not data.has("unitType"):
+		print("Spawn is missing type")
+		return null
+
+	var _unit_data = RegistryManager.units().get_element(data["unitType"])
+	if _unit_data == null:
+		print("Failed to get unit data")
+		return
+
+	var _unit = _unit_data.spawn(data)
+	return _unit

@@ -19,7 +19,7 @@ func _ready():
 		controlled_unit = parent
 
 	# Create the aggro collider.
-	var aggro_shape = CapsuleShape3D.new()
+	var aggro_shape = CylinderShape3D.new()
 	aggro_shape.radius = aggro_distance
 
 	var aggro_collision_shape = CollisionShape3D.new()
@@ -34,7 +34,7 @@ func _ready():
 	add_child(aggro_collider)
 
 	# create the deaggro collider.
-	var deaggro_shape = CapsuleShape3D.new()
+	var deaggro_shape = CylinderShape3D.new()
 	deaggro_shape.radius = deaggro_distance
 
 	var deaggro_collision_shape = CollisionShape3D.new()
@@ -49,14 +49,29 @@ func _ready():
 	add_child(deaggro_collider)
 
 
+func _process(_delta):
+	if not controlled_unit.target_entity: return
+	
+	controlled_unit.change_state("Moving", controlled_unit.target_entity.position)
+
+
 func _enter_aggro_range(body: PhysicsBody3D):
 	if aggro_type != UnitData.AggroType.AGGRESSIVE: return
 	if controlled_unit.target_entity: return
 
-	if body.get_class() != "Unit": return
-
+	var _collided_unit = body as Unit
+	if _collided_unit == null:
+		return
+	
+	if _collided_unit == controlled_unit: return
+	if _collided_unit.team == controlled_unit.team: return
+	
+	print("Now targeting:" + _collided_unit.name)
+	
 	controlled_unit.target_entity = body as Unit
-	controlled_unit.change_state("Attacking", null)
+	# Make the attacking work in the future, for now just follow the target
+	#controlled_unit.change_state("Attacking", null)
+	controlled_unit.change_state("Moving", _collided_unit.position)
 
 
 func _exit_deaggro_range(body: PhysicsBody3D):

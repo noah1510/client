@@ -226,6 +226,7 @@ func spawn(spawn_args: Dictionary):
 		_unit.player_controlled = true
 	else:
 		var unit_controller = NPC_Controller.new()
+		unit_controller.name = "NPC_Controller"
 		unit_controller.aggro_type = aggro_type
 		unit_controller.aggro_distance = aggro_distance
 		unit_controller.deaggro_distance = deaggro_distance

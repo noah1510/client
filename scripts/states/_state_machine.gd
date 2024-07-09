@@ -32,11 +32,14 @@ func _physics_process(delta):
 
 func change_state(new_state_name, args = null):
 	if not states.has(new_state_name): return
-	print("Changing to " + new_state_name)
+	
 	var new_state = states[new_state_name]
 	if current_state == new_state:
+		print("Updating state " + new_state_name + " of "  + entity.name)
 		current_state.modify(entity, args)
 		return
+		
+	print("Changing " + entity.name + " to " + new_state_name)
 	
 	if current_state != null:
 		current_state.exit(entity)

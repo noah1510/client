@@ -70,7 +70,7 @@ func _setup_nodes():
 	
 	var character_spawner = MultiplayerSpawner.new()
 	character_spawner.name ="CharacterSpawner"
-	character_spawner.spawn_path = character_container.get_path()
+	character_spawner.spawn_path = NodePath("../Characters")
 	character_spawner.spawn_limit = 50
 	character_spawner.spawn_function = _spawn_character
 	
