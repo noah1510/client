@@ -7,12 +7,16 @@ signal change
 
 func enter(entity, args=null):
 	pass
-	
-	
+
+
 func exit(entity):
 	pass
-	
-	
+
+
+func modify(entity, args):
+	pass
+
+
 func update(entity, _delta):
 	# Client Tick, variable based on framerate
 	if multiplayer.is_server(): return

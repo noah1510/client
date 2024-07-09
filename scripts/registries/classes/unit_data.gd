@@ -216,6 +216,14 @@ func spawn(spawn_args: Dictionary):
 	_unit.per_level_stats = stat_growth.get_copy()
 	_unit.unit_id = id.to_string()
 
+	if spawn_args.has("index"):
+		_unit.index = spawn_args["index"]
+
+	if spawn_args.has("level"):
+		var level_incrrement = int(spawn_args["level"]) - _unit.level
+		if level_incrrement > 0:
+			_unit.level_up(level_incrrement)
+
 	if is_character:
 		# set the character's script and set all the values
 		#character.set_script("res://classes/character.gd")

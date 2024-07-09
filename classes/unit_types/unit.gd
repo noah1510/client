@@ -183,6 +183,11 @@ func _ready():
 	healthbar = get_node("Healthbar")
 
 
+# Stats related things
+func level_up(times: int = 1):
+	maximum_stats.add(per_level_stats, times)
+	current_stats.add(per_level_stats, times)
+	level += times
 
 # Movement
 func update_target_location(target_location: Vector3):

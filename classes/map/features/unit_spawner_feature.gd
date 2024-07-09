@@ -112,16 +112,16 @@ func spawn(feature_data: Dictionary, parent: Node) -> bool:
 	return true
 
 
-func _get_unit_level(game_time: float) -> int:
-	return unit_level + (unit_level_growth * current_wave) + int(unit_level_growth_time * game_time)
+func _get_unit_level(wave_index: int, game_time: float) -> int:
+	return unit_level + (unit_level_growth * wave_index) + int(unit_level_growth_time * game_time)
 
 
 func _get_wave_cooldown() -> float:
 	return wave_interval
 
 
-func _get_wave_size() -> int:
-	return wave_size + (wave_growth * current_wave)
+func _get_wave_size(wave_number: int, _game_time: float) -> int:
+	return wave_size + (wave_growth * wave_number)
 
 
 func _on_unit_death(unit: Unit):
@@ -139,30 +139,32 @@ func _on_unit_death(unit: Unit):
 
 
 func _spawn_wave():
-	current_wave += 1
-	var _size = _get_wave_size()
+	var spawn_time = map.time_elapsed
+	
+	var _size = _get_wave_size(current_wave, spawn_time)
 	print("Spawning wave of " + str(_size) + " units")
 
 	for i in range(_size):
-		get_tree().create_timer(i * 0.5).timeout.connect(_spawn_wave_unit)
+		var spawn_args = {
+			"unitType": unit_type,
+			"name": name + "_wave_" + str(current_wave) + "_unit_" + str(current_wave),
+			"team": team,
+			"index": i,
+			"position": position,
+			"level": _get_unit_level(current_wave, spawn_time),
+		}
+
+		get_tree().create_timer(i * 0.5).timeout.connect(
+			func (): unit_multiplayer_spawner.spawn(spawn_args)
+		)
+	
+	current_wave += 1
 	
 	if not require_clear:
 		var _next_cd = _get_wave_cooldown()
 		print("Next wave in " + str(_next_cd) + " seconds")
 		spawn_timer.wait_time = _next_cd
 		spawn_timer.start()
-
-
-func _spawn_wave_unit():
-	var spawn_data = {
-		"unitType": unit_type,
-		"name": name + "_wave_" + str(current_wave) + "_unit_" + str(current_wave),
-		"team": team,
-		"position": position,
-		"level": _get_unit_level(map.time_elapsed),
-	}
-
-	var _unit = unit_multiplayer_spawner.spawn(spawn_data)
 
 
 func _multiplayer_spawn_unit(data: Dictionary):
