@@ -80,11 +80,18 @@ if __name__ == "__main__":
         help="The build directory (default: build_<target_arch>_<build_mode>)"
     )
 
+    parser.add_argument(
+        "--build_system",
+        type=str,
+        required=False,
+        default="-GNinja",
+        help="The build system cmake should use under the hood (default: -GNinja)"
+    )
+
     args = vars(parser.parse_args())
     print(args)
 
-    setup_command: List[str] = []
-    compile_command: List[str] = []
+    cmake_command: List[str] = []
 
     if args["target_arch"] == "native":
         args["target_arch"] = host_arch
@@ -92,16 +99,14 @@ if __name__ == "__main__":
     if host_arch == args["target_arch"]:
         print("Building natively for the host architecture ({})".format(host_arch))
 
-        setup_command = ["cmake"]
-        compile_command = ["ninja"]
+        cmake_command = ["cmake"]
     else:
         print("Building with docker for the target architecture: {}".format(args["target_arch"]))
         
         compiler_script = setup_docker_image(args["target_arch"], project_dir)
         compiler_script = os.path.abspath(compiler_script)
 
-        setup_command = [compiler_script, "cmake"]
-        compile_command = [compiler_script, "ninja"]
+        cmake_command = [compiler_script, "cmake"]
 
     # Set the build directory
     build_dir = os.path.join("extensions", "build_{}_{}".format(args["target_arch"], args["build_mode"]))
@@ -111,31 +116,27 @@ if __name__ == "__main__":
     os.makedirs(build_dir, exist_ok=True)
 
     # Run the setup command
-    setup_command.extend([
+    setup_command = [
+        *cmake_command,
         "-DCMAKE_BUILD_TYPE={}".format(args["build_mode"].capitalize()),
         "-DGODOT_GDEXTENSION_API_FILE={}".format(args["api_file"]),
         "-B", build_dir,
-        "-GNinja",
+        args["build_system"],
         "extensions"
-    ])
-
+    ]
     if subprocess.call(setup_command, cwd=project_dir) != 0:
         print("Failed to run the setup command")
         exit(1)
 
     # Compile the source file
-    compile_command.extend([
-        "-C", build_dir
-    ])
-
+    compile_command = [*cmake_command, "--build", build_dir]
     if subprocess.call(compile_command, cwd=project_dir) != 0:
         print("Failed to run the compile command")
         exit(1)
 
     # install the build output
-    compile_command.append("install")
-
-    if subprocess.call(compile_command, cwd=project_dir) != 0:
+    install_command = [*cmake_command, "--install", build_dir]
+    if subprocess.call(install_command, cwd=project_dir) != 0:
         print("Failed to install the build output")
         exit(1)
     
