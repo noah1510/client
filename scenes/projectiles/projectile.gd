@@ -118,7 +118,7 @@ func _process(delta):
 	var step_distance = speed * delta
 
 	# If the distance between the projectile and the target is less than the step distance, the projectile has hit
-	var has_hit : bool = global_position.distance_to(target_pos) < step_distance
+	var has_hit : bool = global_position.distance_to(target_head) < step_distance
 
 	# If the projectile has hit, deal damage and destroy the projectile
 	if has_hit:

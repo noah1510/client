@@ -246,6 +246,7 @@ func spawn(spawn_args: Dictionary):
 	_unit.current_stats = stats.get_copy()
 	_unit.per_level_stats = stat_growth.get_copy()
 	_unit.unit_id = id.to_string()
+	_unit.windup_fraction = windup_fraction
 
 	_unit.dropped_exp = kill_exp
 	_unit.dropped_gold = kill_gold

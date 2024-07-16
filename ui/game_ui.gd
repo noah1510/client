@@ -5,6 +5,10 @@ extends Node
 @onready var player_icon = $CharacterUI/Portrait
 @onready var money_count = $GameStats/Money
 @onready var kda_display = $GameStats/KDA
+@onready var cs_display = $GameStats/CS
+
+@onready var hp_bar = $CharacterUI/HealthMana/HealthBar
+@onready var mana_bar = $CharacterUI/HealthMana/ManaBar
 
 var _character
 
@@ -33,6 +37,13 @@ func _process(delta: float) -> void:
 
 	money_count.text = str(_character.current_gold)
 	kda_display.text = str(_character.kills) + "/" + str(_character.deaths) + "/" + str(_character.assists)
+	cs_display.text = str(_character.minion_kills)
+
+	hp_bar.value = _character.current_stats.health_max
+	hp_bar.max_value = _character.maximum_stats.health_max
+
+	mana_bar.value = _character.current_stats.mana_max
+	mana_bar.max_value = _character.maximum_stats.mana_max
 
 
 func _set_icons():
@@ -57,3 +68,8 @@ func _set_icons():
 		return
 
 	player_icon.texture = _player_icon
+
+	if _character.has_mana:
+		mana_bar.show()
+	else:
+		mana_bar.hide()

@@ -75,8 +75,10 @@ func start_windup(entity):
 	if not windup_timer.is_stopped(): return
 	if not cooldown_timer.is_stopped(): return
 
-	# 1/2 of the attack duration is the windup time
-	windup_timer.wait_time = (1.0 / entity.current_stats.attack_speed) / 2.0
+	var attack_time = float(1.0 / entity.current_stats.attack_speed)
+	windup_timer.wait_time = attack_time * entity.windup_fraction
+	cooldown_timer.wait_time = attack_time * (1.0-entity.windup_fraction)
+	
 	windup_timer.start()
 
 
@@ -84,7 +86,4 @@ func do_attack(entity):
 	if not entity.can_attack(): return
 
 	entity.attack()
-
-	# The other 1/2 of the attack duration is the cooldown time
-	cooldown_timer.wait_time = (1.0 / entity.current_stats.attack_speed) / 2.0
 	cooldown_timer.start()

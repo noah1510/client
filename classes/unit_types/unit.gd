@@ -23,6 +23,7 @@ var has_mana: bool = false
 var current_shielding: int = 0
 
 var turn_speed: float = 15.0
+var windup_fraction: float = 0.1
 
 var level : int = 1
 var level_exp : int = 0
@@ -39,6 +40,8 @@ var is_alive : bool = true
 var kills : int = 0
 var deaths : int = 0
 var assists : int = 0
+
+var minion_kills: int = 0
 
 # Each bit of cc_state represents a different type of crowd control.
 var cc_state: int = 0
@@ -192,6 +195,8 @@ func _ready():
 	healthbar_node.name = "Healthbar"
 	add_child(healthbar_node)
 	healthbar = get_node("Healthbar")
+	healthbar.max_value = maximum_stats.health_max
+	healthbar.sync(current_stats.health_max)
 
 
 func spawn_projectile(_args):
@@ -201,8 +206,11 @@ func spawn_projectile(_args):
 	
 	var _projectile = Projectile.new()
 
+	var spawn_offset = projectile_config["spawn_offset"] as Vector3
+	spawn_offset = spawn_offset.rotated(Vector3(0, 1, 0), rotation.y)
+
 	_projectile.caster = self
-	_projectile.position = server_position
+	_projectile.position = server_position + spawn_offset
 	_projectile.target = target_entity
 
 	_projectile.model = projectile_config["model"]
@@ -219,6 +227,12 @@ func spawn_projectile(_args):
 func level_up(times: int = 1):
 	maximum_stats.add(per_level_stats, times)
 	current_stats.add(per_level_stats, times)
+	
+	# fixes a potential bug with the spawners
+	# this allows for level up to be called before spawning the unit
+	if healthbar:
+		healthbar.max_value = maximum_stats.health_max
+	
 	level += times
 	required_exp = get_exp_for_levelup(level + 1)
 
@@ -267,14 +281,27 @@ func reward_exp_on_death(murderer = null):
 	var per_unit_exp = int(dropped_exp / unit_share_factor)
 	var per_unit_gold = int(dropped_gold / unit_share_factor)
 
-	for _unit in rewarded_units:
-		if _unit == murderer:
-			_unit.kills += 1
-		else:
-			_unit.assists += 1
+	if player_controlled:
+		for _unit in rewarded_units:
+			if _unit == murderer:
+				_unit.kills += 1
+			else:
+				_unit.assists += 1
+	else:
+		murderer.minion_kills += 1
 
-		_unit.give_exp(per_unit_exp)
-		_unit.give_gold(per_unit_gold)
+	if rewarded_units.size() == 1:
+		murderer.give_exp(per_unit_exp)
+		murderer.give_gold(per_unit_gold)
+	else:
+		for _unit in rewarded_units:
+			_unit.give_exp(per_unit_exp)
+
+			# the murderer gets more gold than everyone else
+			if _unit == murderer:
+				_unit.give_gold(int(per_unit_gold * 1.5))
+			else:
+				_unit.give_gold(per_unit_gold)
 
 
 ## This function returns the amount of experience required to level up.
@@ -325,6 +352,8 @@ func take_damage(caster: Unit, is_crit: bool):
 	if current_stats.health_max <= 0:
 		current_stats.health_max = 0
 		die(caster)
+		
+	healthbar.sync(current_stats.health_max)
 
 
 func attack():
@@ -350,6 +379,7 @@ func heal(amount:float, keep_extra:bool = false):
 		current_shielding = current_stats.health_max - maximum_stats.health_max
 	
 	current_stats.health_max = maximum_stats.health_max
+	healthbar.sync(current_stats.health_max)
 
 
 func die(murderer = null):
