@@ -27,59 +27,29 @@ class_name StatCollection
 
 static func from_dict(json_data_object: Dictionary) -> StatCollection:
     var stat = StatCollection.new()
-    if json_data_object.has("health_max"):
-        stat.health_max = int(json_data_object["health_max"])
-
-    if json_data_object.has("health_regen"):
-        stat.health_regen = float(json_data_object["health_regen"])
     
+    stat.health_max = JsonHelper.get_optional_int(json_data_object, "health_max", 0)
+    stat.health_regen = JsonHelper.get_optional_number(json_data_object, "health_regen", 0.0)
 
-    if json_data_object.has("mana_max"):
-        stat.mana_max = int(json_data_object["mana_max"])
+    stat.mana_max = JsonHelper.get_optional_int(json_data_object, "mana_max", 0)
+    stat.mana_regen = JsonHelper.get_optional_number(json_data_object, "mana_regen", 0.0)
 
-    if json_data_object.has("mana_regen"):
-        stat.mana_regen = float(json_data_object["mana_regen"])
-    
+    stat.armor = JsonHelper.get_optional_int(json_data_object, "armor", 0)
+    stat.magic_resist = JsonHelper.get_optional_int(json_data_object, "magic_resist", 0)
 
-    if json_data_object.has("armor"):
-        stat.armor = int(json_data_object["armor"])
+    stat.armor_pen_flat = JsonHelper.get_optional_int(json_data_object, "armor_pen_flat", 0)
+    stat.armor_pen_percent = JsonHelper.get_optional_number(json_data_object, "armor_pen_percent", 0.0)
 
-    if json_data_object.has("magic_resist"):
-        stat.magic_resist = int(json_data_object["magic_resist"])
-    
+    stat.magic_pen_flat = JsonHelper.get_optional_int(json_data_object, "magic_pen_flat", 0)
+    stat.magic_pen_percent = JsonHelper.get_optional_number(json_data_object, "magic_pen_percent", 0.0)
 
-    if json_data_object.has("armor_pen_flat"):
-        stat.armor_pen_flat = int(json_data_object["armor_pen_flat"])
+    stat.attack_damage = JsonHelper.get_optional_int(json_data_object, "attack_damage", 0)
+    stat.attack_speed = JsonHelper.get_optional_number(json_data_object, "attack_speed", 0.0)
+    stat.attack_range = JsonHelper.get_optional_number(json_data_object, "attack_range", 0.0)
+    stat.attack_crit_chance = JsonHelper.get_optional_number(json_data_object, "attack_crit_chance", 0.0)
+    stat.attack_crit_damage = JsonHelper.get_optional_number(json_data_object, "attack_crit_damage", 0.0)
 
-    if json_data_object.has("armor_pen_percent"):
-        stat.armor_pen_percent = float(json_data_object["armor_pen_percent"])
-
-
-    if json_data_object.has("magic_pen_flat"):
-        stat.magic_pen_flat = int(json_data_object["magic_pen_flat"])
-
-    if json_data_object.has("magic_pen_percent"):
-        stat.magic_pen_percent = float(json_data_object["magic_pen_percent"])
-    
-
-    if json_data_object.has("attack_damage"):
-        stat.attack_damage = int(json_data_object["attack_damage"])
-
-    if json_data_object.has("attack_speed"):
-        stat.attack_speed = float(json_data_object["attack_speed"])
-
-    if json_data_object.has("attack_range"):
-        stat.attack_range = float(json_data_object["attack_range"])
-
-    if json_data_object.has("attack_crit_chance"):
-        stat.attack_crit_chance = float(json_data_object["attack_crit_chance"])
-
-    if json_data_object.has("attack_crit_damage"):
-        stat.attack_crit_damage = float(json_data_object["attack_crit_damage"])
-    
-
-    if json_data_object.has("movement_speed"):
-        stat.movement_speed = float(json_data_object["movement_speed"])
+    stat.movement_speed = JsonHelper.get_optional_number(json_data_object, "movement_speed", 0.0)
     
     return stat
 

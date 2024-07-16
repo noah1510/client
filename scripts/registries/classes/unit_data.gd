@@ -12,6 +12,7 @@ enum AggroType {
 
 var stats = StatCollection.new()
 var stat_growth = StatCollection.new()
+var windup_fraction: float = 0.1
 
 var id: Identifier
 var model_id: Identifier
@@ -132,53 +133,12 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 
 	new_unit.is_character = _is_character
 
-	if _json_data.has("kill_exp"):
-		var raw_kill_exp = _json_data["kill_exp"]
-		if raw_kill_exp is float:
-			new_unit.kill_exp = int(raw_kill_exp)
-		else:
-			print("Unit (%s): kill_exp must be a number (int). using default" % _unit_id_str)
-			new_unit.kill_exp = 0
-
-	if _json_data.has("kill_gold"):
-		var raw_kill_gold = _json_data["kill_gold"]
-		if raw_kill_gold is float:
-			new_unit.kill_gold = int(raw_kill_gold)
-		else:
-			print("Unit (%s): kill_gold must be a number (int). using default" % _unit_id_str)
-			new_unit.kill_gold = 0
-
-	if _json_data.has("exp_per_second"):
-		var raw_exp_per_second = _json_data["exp_per_second"]
-		if raw_exp_per_second is float:
-			new_unit.exp_per_second = raw_exp_per_second
-		else:
-			print("Unit (%s): exp_per_second must be a float. using default" % _unit_id_str)
-			new_unit.exp_per_second = 0.0
-
-	if _json_data.has("gold_per_second"):
-		var raw_gold_per_second = _json_data["gold_per_second"]
-		if raw_gold_per_second is float:
-			new_unit.gold_per_second = raw_gold_per_second
-		else:
-			print("Unit (%s): gold_per_second must be a float. using default" % _unit_id_str)
-			new_unit.gold_per_second = 0.0
-
-	if _json_data.has("spawn_exp"):
-		var raw_spawn_exp = _json_data["spawn_exp"]
-		if raw_spawn_exp is float:
-			new_unit.spawn_exp = raw_spawn_exp
-		else:
-			print("Unit (%s): spawn_exp must be a number (int). using default" % _unit_id_str)
-			new_unit.spawn_exp = 0
-
-	if _json_data.has("spawn_gold"):
-		var raw_spawn_gold = _json_data["spawn_gold"]
-		if raw_spawn_gold is float:
-			new_unit.spawn_gold = raw_spawn_gold
-		else:
-			print("Unit (%s): spawn_gold must be a number (int). using default" % _unit_id_str)
-			new_unit.spawn_gold = 0
+	new_unit.kill_exp = JsonHelper.get_optional_int(_json_data, "kill_exp", 0)
+	new_unit.kill_gold = JsonHelper.get_optional_int(_json_data, "kill_gold", 0)
+	new_unit.exp_per_second = JsonHelper.get_optional_number(_json_data, "exp_per_second", 0.0)
+	new_unit.gold_per_second = JsonHelper.get_optional_number(_json_data, "gold_per_second", 0.0)
+	new_unit.spawn_exp = JsonHelper.get_optional_int(_json_data, "spawn_exp", 0)
+	new_unit.spawn_gold = JsonHelper.get_optional_int(_json_data, "spawn_gold", 0)
 
 	if _json_data.has("attack_projectile"):
 		var _projectile_config = {}
@@ -186,32 +146,25 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 		if raw_projectile_config is Dictionary:
 			_projectile_config["model"] = str(raw_projectile_config["model"])
 			_projectile_config["speed"] = float(raw_projectile_config["speed"])
-			
-			var model_scale = Vector3(1.0, 1.0, 1.0)
-			if raw_projectile_config.has("model_scale"):
-				var raw_model_scale = raw_projectile_config["model_scale"]
-				if raw_model_scale.has("x"):
-					model_scale.x = float(raw_model_scale["x"])
-				if raw_model_scale.has("y"):
-					model_scale.y = float(raw_model_scale["y"])
-				if raw_model_scale.has("z"):
-					model_scale.z = float(raw_model_scale["z"])
-
-			_projectile_config["model_scale"] = model_scale
-
-			var model_rotation = Vector3(0.0, 0.0, 0.0)
-			if raw_projectile_config.has("model_rotation"):
-				var raw_model_rotation = raw_projectile_config["model_rotation"]
-				if raw_model_rotation.has("x"):
-					model_rotation.x = float(raw_model_rotation["x"])
-				if raw_model_rotation.has("y"):
-					model_rotation.y = float(raw_model_rotation["y"])
-				if raw_model_rotation.has("z"):
-					model_rotation.z = float(raw_model_rotation["z"])
-
-			_projectile_config["model_rotation"] = model_rotation
+			_projectile_config["model_scale"] = JsonHelper.get_vector3(
+				raw_projectile_config,
+				"model_scale",
+				Vector3(1.0, 1.0, 1.0)
+			)
+			_projectile_config["model_rotation"] = JsonHelper.get_vector3(
+				raw_projectile_config,
+				"model_rotation",
+				Vector3(0.0, 0.0, 0.0)
+			)
+			_projectile_config["spawn_offset"] = JsonHelper.get_vector3(
+				raw_projectile_config,
+				"spawn_offset",
+				Vector3(0.0, 0.0, 0.0)
+			)
 
 			new_unit.projectile_config = _projectile_config
+
+	new_unit.windup_fraction = JsonHelper.get_optional_number(_json_data, "windup_fraction", 0.1)
 
 	if _json_data.has("aggro_type"):
 		var raw_aggro_type = _json_data["aggro_type"]
@@ -227,21 +180,8 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 				print("Unit (%s): Invalid aggro_type: %s" % [_unit_id_str, str(raw_aggro_type)])
 				new_unit.aggro_type = AggroType.PASSIVE
 
-	if _json_data.has("aggro_distance"):
-		var raw_aggro_distance = _json_data["aggro_distance"]
-		if raw_aggro_distance is float:
-			new_unit.aggro_distance = raw_aggro_distance
-		else:
-			print("Unit (%s): aggro_distance must be a float. using default" % _unit_id_str)
-			new_unit.aggro_distance = 1.0
-	
-	if _json_data.has("deaggro_distance"):
-		var raw_deaggro_distance = _json_data["deaggro_distance"]
-		if raw_deaggro_distance is float:
-			new_unit.deaggro_distance = raw_deaggro_distance
-		else:
-			print("Unit (%s): deaggro_distance must be a float. using default" % _unit_id_str)
-			new_unit.deaggro_distance = 3.0
+	new_unit.aggro_distance = JsonHelper.get_optional_number(_json_data, "aggro_distance", 1.0)
+	new_unit.deaggro_distance = JsonHelper.get_optional_number(_json_data, "deaggro_distance", 3.0)
 
 	return new_unit
 
