@@ -19,7 +19,7 @@ func _ready():
 		controlled_unit = parent
 
 	# Create the aggro collider.
-	var aggro_shape = CylinderShape3D.new()
+	var aggro_shape = CapsuleShape3D.new()
 	aggro_shape.radius = aggro_distance
 
 	var aggro_collision_shape = CollisionShape3D.new()
@@ -34,7 +34,7 @@ func _ready():
 	add_child(aggro_collider)
 
 	# create the deaggro collider.
-	var deaggro_shape = CylinderShape3D.new()
+	var deaggro_shape = CapsuleShape3D.new()
 	deaggro_shape.radius = deaggro_distance
 
 	var deaggro_collision_shape = CollisionShape3D.new()

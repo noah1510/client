@@ -6,6 +6,7 @@ signal camera_property_changed()
 # a helper value, to pause some things while in a menu
 @export var in_focued_menu: bool = false
 @export var is_dedicated_server:bool = false
+@export var show_all_attack_ranges:bool = false
 
 # the settings groups
 @export var camera_settings: CameraSettings

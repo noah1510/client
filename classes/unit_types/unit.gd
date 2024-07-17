@@ -5,6 +5,8 @@ class_name Unit
 # Signals
 signal died
 
+signal current_stats_changed
+
 # constant unit variables
 @export var id: int
 @export var team: int
@@ -56,6 +58,8 @@ var nav_agent : NavigationAgent3D
 var map : Node = null
 var projectile_config : Dictionary
 var projectile_spawner : MultiplayerSpawner
+
+var attack_range_visualizer : MeshInstance3D
 
 # UI
 var healthbar : ProgressBar
@@ -198,7 +202,29 @@ func _ready():
 	healthbar = get_node("Healthbar")
 	healthbar.max_value = maximum_stats.health_max
 	healthbar.sync(current_stats.health_max)
+	current_stats_changed.connect(func (): _update_healthbar(healthbar))
 
+	# set up the attack range visualizer
+	var attack_range_mesh = TorusMesh.new()
+	attack_range_mesh.inner_radius = current_stats.attack_range * 0.99
+	attack_range_mesh.outer_radius = current_stats.attack_range
+
+	attack_range_visualizer = MeshInstance3D.new()
+	attack_range_visualizer.name = "AttackRangeVisualizer"
+	attack_range_visualizer.mesh = attack_range_mesh
+	attack_range_visualizer.transparency = 0.8
+	attack_range_visualizer.cast_shadow = GeometryInstance3D.ShadowCastingSetting.SHADOW_CASTING_SETTING_OFF
+
+	add_child(attack_range_visualizer)
+	attack_range_visualizer = get_node("AttackRangeVisualizer")
+
+	current_stats_changed.connect(func ():
+		attack_range_visualizer.mesh.inner_radius = current_stats.attack_range * 0.99
+		attack_range_visualizer.mesh.outer_radius = current_stats.attack_range
+	)
+	
+	if not Config.show_all_attack_ranges:
+		attack_range_visualizer.hide()
 
 func spawn_projectile(_args):
 	if not projectile_config:
@@ -229,10 +255,7 @@ func level_up(times: int = 1):
 	maximum_stats.add(per_level_stats, times)
 	current_stats.add(per_level_stats, times)
 	
-	# fixes a potential bug with the spawners
-	# this allows for level up to be called before spawning the unit
-	if healthbar:
-		healthbar.max_value = maximum_stats.health_max
+	current_stats_changed.emit()
 	
 	level += times
 	required_exp = get_exp_for_levelup(level + 1)
@@ -354,7 +377,7 @@ func take_damage(caster: Unit, is_crit: bool):
 		current_stats.health_max = 0
 		die(caster)
 		
-	healthbar.sync(current_stats.health_max)
+	current_stats_changed.emit()
 
 
 func attack():
@@ -380,7 +403,8 @@ func heal(amount:float, keep_extra:bool = false):
 		current_shielding = current_stats.health_max - maximum_stats.health_max
 	
 	current_stats.health_max = maximum_stats.health_max
-	healthbar.sync(current_stats.health_max)
+
+	current_stats_changed.emit()
 
 
 func die(murderer = null):
@@ -396,6 +420,7 @@ func die(murderer = null):
 # UI
 func _update_healthbar(node: ProgressBar):
 	node.value = current_stats.health_max
+	node.max_value = maximum_stats.health_max
 
 
 func move_on_path(delta: float) -> bool:

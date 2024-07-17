@@ -40,7 +40,7 @@ func _ready():
 			server_listener = server_listener.get_parent()
 
 	# set up the attack collider
-	var attack_coll_shape = CylinderShape3D.new()
+	var attack_coll_shape = CapsuleShape3D.new()
 	attack_coll_shape.radius = 10
 
 	var attack_collision_shape = CollisionShape3D.new()
@@ -97,7 +97,9 @@ func _input(event):
 
 	
 	if event.is_action("player_attack_closest"):
-		_player_action_attack_near(character.global_position, null)
+		if not _player_action_attack_near(character.global_position, null):
+			character.change_state("Idle", null)
+		
 		return
 
 
@@ -119,13 +121,11 @@ func player_mouse_action(event, play_marker: bool=false, attack_move: bool=false
 
 	# Move
 	if result.collider.is_in_group("Ground"):
-		if play_marker:
-			_play_move_marker(result.position, attack_move)
-
 		if attack_move:
-			_player_action_attack_near(result.position, null)
+			if not _player_action_attack_near(result.position, null):
+				character.change_state("Idle", null)
 		else:
-			_player_action_move(result.position)
+			_player_action_move(result.position, play_marker)
 	
 	else:
 		# Attack
@@ -143,12 +143,19 @@ func _player_action_attack(collider):
 	var target_path = str(colliding_unit.get_path())
 	server_listener.rpc_id(get_multiplayer_authority(), "target", target_path)
 
+	_play_move_marker(colliding_unit.global_position, true)
 
-func _player_action_attack_near(center: Vector3, target_mode = null):
+
+func _player_action_attack_near(center: Vector3, target_mode = null) -> bool:
+	# make the attack range visable for a bit
+	if not Config.show_all_attack_ranges:
+		character.attack_range_visualizer.show()
+		get_tree().create_timer(0.2).connect("timeout", character.attack_range_visualizer.hide)
+
 	var targeted_unit = target_mode as Unit
 	if targeted_unit:
 		print("Attacking " + targeted_unit.name)
-		return
+		return false
 
 	var target_players = true
 	var target_minions = true
@@ -194,13 +201,17 @@ func _player_action_attack_near(center: Vector3, target_mode = null):
 
 	if closest_unit == null:
 		print("No valid targets in range")
-		return
+		return false
 	
 	_player_action_attack(closest_unit)
-	return
+
+	return true
 
 
-func _player_action_move(target_pos: Vector3):
+func _player_action_move(target_pos: Vector3, update_marker: bool = false):
+	if update_marker:
+		_play_move_marker(target_pos, false)
+	
 	target_pos.y += 1
 	server_listener.rpc_id(get_multiplayer_authority(), "move_to", target_pos)
 
