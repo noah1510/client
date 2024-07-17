@@ -84,6 +84,7 @@ func _input(event):
 		# 		is_middle_mouse_dragging = false
 		
 		# Stop dragging if mouse is released
+		return
 	
 	if event is InputEventMouseMotion:
 		if is_left_mouse_dragging:
@@ -95,6 +96,9 @@ func _input(event):
 			return
 
 	
+	if event.is_action("player_attack_closest"):
+		_player_action_attack_near(character.global_position, null)
+		return
 
 
 func get_target_position(pid: int) -> Vector3:
@@ -121,7 +125,7 @@ func player_mouse_action(event, play_marker: bool=false, attack_move: bool=false
 		if attack_move:
 			_player_action_attack_near(result.position, null)
 		else:
-			_player_action_move(result)
+			_player_action_move(result.position)
 	
 	else:
 		# Attack
@@ -196,9 +200,9 @@ func _player_action_attack_near(center: Vector3, target_mode = null):
 	return
 
 
-func _player_action_move(result):
-		result.position.y += 1
-		server_listener.rpc_id(get_multiplayer_authority(), "move_to", result.position)
+func _player_action_move(target_pos: Vector3):
+	target_pos.y += 1
+	server_listener.rpc_id(get_multiplayer_authority(), "move_to", target_pos)
 
 
 func _play_move_marker(marker_position : Vector3, attack_move: bool = false):
@@ -212,7 +216,18 @@ func center_camera(playerid):
 
 
 func _process(delta):
-	if Config.is_dedicated_server : return ;
+	if Config.is_dedicated_server : return
+
+	# Handle the gamepad and touch movement input
+	var movement_delta = Vector3()
+
+	movement_delta.x += Input.get_action_strength("character_move_right") - Input.get_action_strength("character_move_left")
+	movement_delta.z += Input.get_action_strength("character_move_down") - Input.get_action_strength("character_move_up")
+
+	if not movement_delta.is_zero_approx():
+		var target_position = movement_delta * character.current_stats.movement_speed * delta + character.global_position
+		_player_action_move(target_position)
+
 	# handle all the camera-related input
 	camera_movement_handler()
 	
@@ -293,8 +308,8 @@ func camera_movement_handler() -> void:
 		cam_delta.z += 1
 	
 	# Keyboard input
-	cam_delta.x += Input.get_action_strength("player_right") - Input.get_action_strength("player_left")
-	cam_delta.z += Input.get_action_strength("player_down") - Input.get_action_strength("player_up")
+	cam_delta.x += Input.get_action_strength("camera_right") - Input.get_action_strength("camera_left")
+	cam_delta.z += Input.get_action_strength("camera_down") - Input.get_action_strength("camera_up")
 	
 	# Middle mouse dragging
 	if is_middle_mouse_dragging:
