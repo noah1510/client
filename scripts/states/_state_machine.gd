@@ -6,6 +6,8 @@ extends Node
 var current_state: State
 var states: Dictionary = {}
 
+var queued_states: Array = []
+
 @onready var entity = get_parent();
 
 
@@ -18,6 +20,10 @@ func _ready():
 	if initial_state != null:
 		initial_state.enter(entity);
 		current_state = initial_state
+
+
+func _queue_state(state_name, args = null):
+	queued_states.append([state_name, args])
 
 
 func _process(delta):
@@ -52,3 +58,10 @@ func change_state(new_state_name, args = null):
 	
 	new_state.enter(entity, args)
 	current_state = new_state
+
+	if new_state_name == "Idle":
+		if queued_states.size() > 0:
+			var next_state = queued_states.pop_front()
+			change_state(next_state[0], next_state[1])
+	else:
+		queued_states.clear()

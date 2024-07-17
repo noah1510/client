@@ -48,13 +48,6 @@ func exit(_entity: Unit):
 		windup_timer.timeout.disconnect(conn["callable"])
 
 
-func update(entity: Unit, delta):
-	# Client only
-	if entity.global_position != entity.server_position:
-		entity.global_position = entity.server_position
-		entity.global_position = entity.global_position.lerp(entity.server_position, delta * entity.current_stats.movement_speed)
-
-
 func update_tick_server(entity: Unit, delta):
 	if not entity.target_entity: 
 		entity.change_state("Idle", null)
@@ -64,14 +57,16 @@ func update_tick_server(entity: Unit, delta):
 		entity.change_state("Idle", null)
 		return
 	
-	var target_distance = entity.position.distance_to(entity.target_entity.position)
-	if target_distance <= entity.current_stats.attack_range:
+	var target_direction = entity.target_entity.global_position - entity.global_position
+	if target_direction.length() <= entity.current_stats.attack_range:
 		start_windup(entity)
 		return
-	
-	entity.nav_agent.target_position = entity.target_entity.global_position
-	entity.move_on_path(delta)
 
+	var step_size = entity.current_stats.movement_speed * delta
+	var new_movement_position = entity.global_position + target_direction.normalized() * step_size
+	entity.change_state("Moving", new_movement_position)
+	entity.queue_state_change("Attacking", entity.target_entity)
+	
 
 func start_windup(entity):
 	if not entity.can_attack(): return

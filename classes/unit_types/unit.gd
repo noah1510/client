@@ -134,7 +134,11 @@ func _ready():
 	var state_machine_node = Node.new()
 	state_machine_node.name = "StateMachine"
 	state_machine_node.set_script(state_machine_script)
-	state_machine_node.print_state_changes = player_controlled
+
+	if Config.show_all_state_changes:
+		state_machine_node.print_state_changes = true
+	else:
+		state_machine_node.print_state_changes = player_controlled
 
 	var state_idle_node = Node.new()
 	state_idle_node.name = "Idle"
@@ -509,4 +513,9 @@ func can_take_damage() -> bool:
 
 @rpc("authority", "call_local")
 func change_state(new, args):
-	$StateMachine.change_state(new, args);
+	$StateMachine.change_state(new, args)
+
+
+@rpc("authority", "call_local")
+func queue_state_change(new, args):
+	$StateMachine._queue_state(new, args)

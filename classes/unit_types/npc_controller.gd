@@ -52,7 +52,10 @@ func _ready():
 func _process(_delta):
 	if not controlled_unit.target_entity: return
 	
-	controlled_unit.change_state("Moving", controlled_unit.target_entity.position)
+	if controlled_unit.target_entity.is_alive == false:
+		controlled_unit.target_entity = null
+		controlled_unit.change_state("Idle", null)
+		return
 
 
 func _enter_aggro_range(body: PhysicsBody3D):
@@ -69,9 +72,9 @@ func _enter_aggro_range(body: PhysicsBody3D):
 	print("Now targeting:" + _collided_unit.name)
 	
 	controlled_unit.target_entity = body as Unit
+
 	# Make the attacking work in the future, for now just follow the target
-	#controlled_unit.change_state("Attacking", null)
-	controlled_unit.change_state("Moving", _collided_unit.position)
+	controlled_unit.change_state("Attacking", _collided_unit)
 
 
 func _exit_deaggro_range(body: PhysicsBody3D):

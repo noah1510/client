@@ -7,6 +7,7 @@ signal camera_property_changed()
 @export var in_focued_menu: bool = false
 @export var is_dedicated_server:bool = false
 @export var show_all_attack_ranges:bool = false
+@export var show_all_state_changes:bool = true
 
 # the settings groups
 @export var camera_settings: CameraSettings
