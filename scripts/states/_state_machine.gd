@@ -52,4 +52,3 @@ func change_state(new_state_name, args = null):
 	
 	new_state.enter(entity, args)
 	current_state = new_state
-	

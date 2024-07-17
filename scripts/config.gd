@@ -6,6 +6,7 @@ signal camera_property_changed()
 # a helper value, to pause some things while in a menu
 @export var in_focued_menu: bool = false
 @export var is_dedicated_server:bool = false
+
 # the settings groups
 @export var camera_settings: CameraSettings
 @export var graphics_settings: GraphicsSettings
@@ -28,7 +29,8 @@ func _ready() -> void:
 # Settings Keybinds
 func _input(e):
 	if e.is_action("toggle_maximize"):
-		toggle_fullscreen()
+		if e.is_action_released("toggle_maximize"):
+			toggle_fullscreen()
 
 
 func toggle_fullscreen():

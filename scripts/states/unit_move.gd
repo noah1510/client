@@ -5,26 +5,19 @@ func enter(entity: Unit, args=null):
 	modify(entity, args)
 
 
-func exit(entity: Unit):
-	pass
-
-
-func update(entity: Unit, delta):
-	super(entity, delta);
-	# Client only
-	if entity.global_position != entity.server_position:
-		var lrp = delta * 8
-		var _lerp = entity.global_position.lerp(entity.server_position, lrp)
-		entity.global_position = _lerp
-
-
 func update_tick_server(entity: Unit, delta):
 	# Server Only
-	super(entity, delta);
-	entity.move_on_path(delta)
+	super(entity, delta)
+	
+	if entity.move_on_path(delta):
+		entity.change_state("Idle", null)
 
 
 func modify(entity: Unit, args):
+	var target_pos = args as Vector3
+	if not target_pos:
+		print("No target position provided or not a Vector3")
+		return
+
 	# Update Target Position
-	if args is Vector3:
-		entity.nav_agent.target_position = args
+	entity.nav_agent.target_position = target_pos

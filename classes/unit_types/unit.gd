@@ -11,6 +11,7 @@ signal died
 @export var index: int = 0
 @export var nametag: String
 @export var player_controlled: bool = false
+@export var is_structure: bool = false
 @export var unit_id : String = ""
 
 # Stats:
@@ -397,17 +398,25 @@ func _update_healthbar(node: ProgressBar):
 	node.value = current_stats.health_max
 
 
-func move_on_path(delta: float):
-	if nav_agent.is_navigation_finished(): return
-	if not can_move(): return
+func move_on_path(delta: float) -> bool:
+	if nav_agent.is_navigation_finished(): return true
+	if not can_move(): return false
+
 	server_position = global_position
+	nav_agent.target_desired_distance = 0.01
 	
+	var step_length = current_stats.movement_speed * delta
+
 	var target_location = nav_agent.get_next_path_position()
 	var direction = target_location - global_position
 	
-	velocity = direction.normalized() * current_stats.movement_speed * delta
+	nav_agent.velocity = direction.normalized() * step_length
+	velocity = direction.normalized() * step_length
 	rotation.y = lerp_angle(rotation.y, atan2(-direction.x, -direction.z), turn_speed * delta)
+
 	move_and_slide()
+
+	return false
 
 
 func trigger_ability(_index: int):

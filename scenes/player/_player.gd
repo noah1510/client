@@ -15,15 +15,18 @@ var is_middle_mouse_dragging := false
 var is_right_mouse_dragging := false
 var is_left_mouse_dragging := false
 var character : Unit
+var attack_collider : Area3D
 
-@onready var marker = MoveMarker.instantiate();
+@onready var marker = MoveMarker.instantiate()
 #@export var player := 1:
 	#set(id):
 		#player = id
 		#$MultiplayerSynchronizer.set_multiplayer_authority(id)
 
+
 func _ready():
 	add_child(marker)
+
 	# For now close game when server dies
 	multiplayer.server_disconnected.connect(get_tree().quit)
 	spring_arm.spring_length = Config.camera_settings.max_zoom
@@ -36,22 +39,38 @@ func _ready():
 		while !server_listener.is_in_group("Map"):
 			server_listener = server_listener.get_parent()
 
+	# set up the attack collider
+	var attack_coll_shape = CylinderShape3D.new()
+	attack_coll_shape.radius = 10
+
+	var attack_collision_shape = CollisionShape3D.new()
+	attack_collision_shape.shape = attack_coll_shape
+
+	attack_collider = Area3D.new()
+	attack_collider.name = "AttackCollider"
+	attack_collider.add_child(attack_collision_shape)
+
+	add_child(attack_collider)
+	attack_collider = get_node("AttackCollider")
+
 
 func _input(event):
 	if Config.is_dedicated_server: return;
 	
 	if event is InputEventMouseButton:
 		
-		# if event.button_index == MOUSE_BUTTON_LEFT and not is_right_mouse_dragging:
-		# 	player_action(event, not is_left_mouse_dragging, true)
-		# 	if event.is_pressed and not is_left_mouse_dragging:
-		# 		is_left_mouse_dragging = true
-		# 	else:
-		# 		is_left_mouse_dragging = false
+		if event.button_index == MOUSE_BUTTON_LEFT and not is_right_mouse_dragging:
+			player_mouse_action(event, not is_left_mouse_dragging, true)
+			if event.is_pressed and not is_left_mouse_dragging:
+				is_left_mouse_dragging = true
+			else:
+				is_left_mouse_dragging = false
+		
 		# Right click to move
 		if event.button_index == MOUSE_BUTTON_RIGHT and not is_left_mouse_dragging:
 			# Start dragging
-			player_action(event, not is_right_mouse_dragging) # For single clicks
+			player_mouse_action(event, not is_right_mouse_dragging) # For single clicks
+
 			if event.is_pressed and not is_right_mouse_dragging:
 				is_right_mouse_dragging = true
 			else:
@@ -68,11 +87,14 @@ func _input(event):
 	
 	if event is InputEventMouseMotion:
 		if is_left_mouse_dragging:
-			player_action(event, false, true)
+			player_mouse_action(event, false, true)
 			return
+		
 		if is_right_mouse_dragging:
-			player_action(event, false)
+			player_mouse_action(event, false)
 			return
+
+	
 
 
 func get_target_position(pid: int) -> Vector3:
@@ -80,9 +102,9 @@ func get_target_position(pid: int) -> Vector3:
 	if champ:
 		return champ.position
 	return Vector3.ZERO
+	
 
-
-func player_action(event, play_marker: bool=false, attack_move: bool=false):
+func player_mouse_action(event, play_marker: bool=false, attack_move: bool=false):
 	var from = camera.project_ray_origin(event.position)
 	var to = from + camera.project_ray_normal(event.position) * 1000
 	
@@ -93,14 +115,17 @@ func player_action(event, play_marker: bool=false, attack_move: bool=false):
 
 	# Move
 	if result.collider.is_in_group("Ground"):
-		
+		if play_marker:
+			_play_move_marker(result.position, attack_move)
+
 		if attack_move:
-			#if _try_attack_move(result.position, play_marker):
-				#return
-			pass
-		_player_action_move(result, play_marker, attack_move)
-	# Attack
-	_player_action_attack(result.collider)
+			_player_action_attack_near(result.position, null)
+		else:
+			_player_action_move(result)
+	
+	else:
+		# Attack
+		_player_action_attack(result.collider)
 
 
 func _player_action_attack(collider):
@@ -115,34 +140,66 @@ func _player_action_attack(collider):
 	server_listener.rpc_id(get_multiplayer_authority(), "target", target_path)
 
 
-func _player_action_move(result, play_marker: bool, attack_move: bool):
+func _player_action_attack_near(center: Vector3, target_mode = null):
+	var targeted_unit = target_mode as Unit
+	if targeted_unit:
+		print("Attacking " + targeted_unit.name)
+		return
+
+	var target_players = true
+	var target_minions = true
+	var target_structures = true
+
+	if target_mode != null:
+		match str(target_mode):
+			"players_only":
+				target_minions = false
+				target_structures = false
+			"minions_only":
+				target_players = false
+				target_structures = false
+			"structures_only":
+				target_players = false
+				target_minions = false
+	
+	var closest_unit = null
+	var closest_distance = 1000000
+
+	attack_collider.get_child(0).shape.radius = character.current_stats.attack_range
+	attack_collider.global_transform.origin = character.server_position
+
+	var bodies = attack_collider.get_overlapping_bodies()
+	for body in bodies:
+		var unit = body as Unit
+		if unit == null: continue
+		if unit == character: continue
+		if unit.team == character.team: continue
+		if not unit.is_alive: continue
+
+		if unit.player_controlled and not target_players: continue
+		if not unit.player_controlled and not target_minions: continue
+		if unit.is_structure and not target_structures: continue
+
+		if unit.global_position.distance_to(character.global_position) > character.current_stats.attack_range: continue
+
+		var distance = unit.global_position.distance_to(center)
+		if distance > closest_distance: continue
+
+		closest_unit = unit
+		closest_distance = distance
+
+	if closest_unit == null:
+		print("No valid targets in range")
+		return
+	
+	_player_action_attack(closest_unit)
+	return
+
+
+func _player_action_move(result):
 		result.position.y += 1
-		if play_marker:
-			_play_move_marker(result.position, attack_move)
 		server_listener.rpc_id(get_multiplayer_authority(), "move_to", result.position)
 
-
-#func _try_attack_move(target_position: Vector3, play_marker : bool = false):
-	#attack_move_cast.global_position = target_position
-	#attack_move_cast.force_shapecast_update()
-	#if attack_move_cast.is_colliding():
-		#var closest_enemy = null
-		#for i in attack_move_cast.get_collision_count():
-			#var collider = attack_move_cast.get_collider(i)
-			#if collider == null: continue
-			#if not "health" in collider: continue
-			#if collider.team == get_character(multiplayer.get_unique_id()).team: continue
-			#if closest_enemy == null:
-				#closest_enemy = collider
-				#continue
-			#if target_position.distance_to(collider.position) < target_position.distance_to(closest_enemy.position):
-				#closest_enemy = collider
-		#if closest_enemy != null:
-			#_player_action_attack(closest_enemy)
-			#if play_marker:
-				#_play_move_marker(target_position, true)
-			#return true
-	#return false
 
 func _play_move_marker(marker_position : Vector3, attack_move: bool = false):
 	marker.global_position = marker_position

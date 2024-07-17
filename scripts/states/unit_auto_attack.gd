@@ -38,6 +38,9 @@ func modify(entity: Unit, _args = null):
 		print("Target is dead, going back to idle state")
 		entity.change_state("Idle", null)
 		return
+
+	if entity.position.distance_to(target_unit.position) > entity.current_stats.attack_range:
+		entity.change_state("Idle", null)
 		
 
 func exit(_entity: Unit):
