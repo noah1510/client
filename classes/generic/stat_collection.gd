@@ -22,6 +22,11 @@ class_name StatCollection
 @export var attack_crit_chance: float = 0
 @export var attack_crit_damage: float = 0
 
+@export var omnivamp: float = 0
+@export var physical_vamp: float = 0
+@export var magic_vamp: float = 0
+@export var true_vamp: float = 0
+
 @export var movement_speed: float = 0
 
 
@@ -50,6 +55,11 @@ static func from_dict(json_data_object: Dictionary) -> StatCollection:
     stat.attack_crit_damage = JsonHelper.get_optional_number(json_data_object, "attack_crit_damage", 0.0)
 
     stat.movement_speed = JsonHelper.get_optional_number(json_data_object, "movement_speed", 0.0)
+
+    stat.omnivamp = JsonHelper.get_optional_number(json_data_object, "omnivamp", 0.0)
+    stat.physical_vamp = JsonHelper.get_optional_number(json_data_object, "physical_vamp", 0.0)
+    stat.magic_vamp = JsonHelper.get_optional_number(json_data_object, "magic_vamp", 0.0)
+    stat.true_vamp = JsonHelper.get_optional_number(json_data_object, "true_vamp", 0.0)
     
     return stat
 
@@ -84,9 +94,14 @@ func add(other: StatCollection, times: int = 1):
     
     movement_speed += other.movement_speed * times
 
+    omnivamp += other.omnivamp * times
+    physical_vamp += other.physical_vamp * times
+    magic_vamp += other.magic_vamp * times
+    true_vamp += other.true_vamp * times
+
 
 func clamp_self(_min: StatCollection, _max: StatCollection):
-    var new_vals = clamp(self, _min, _max)
+    var new_vals : StatCollection = clamp(self, _min, _max)
     health_max = new_vals.health_max
     health_regen = new_vals.health_regen
 
@@ -110,13 +125,18 @@ func clamp_self(_min: StatCollection, _max: StatCollection):
 
     movement_speed = new_vals.movement_speed
 
+    omnivamp = new_vals.omnivamp
+    physical_vamp = new_vals.physical_vamp
+    magic_vamp = new_vals.magic_vamp
+    true_vamp = new_vals.true_vamp
+
 
 func clamp_below(_max: StatCollection):
     clamp_self(StatCollection.new(), _max)
 
 
 static func clamp(_stat: StatCollection, _min: StatCollection, _max: StatCollection) -> StatCollection:
-    var stat = StatCollection.new()
+    var stat := StatCollection.new()
     stat.health_max = clamp(_stat.health_max, _min.health_max, _max.health_max)
     stat.health_regen = clamp(_stat.health_regen, _min.health_regen, _max.health_regen)
 
@@ -140,6 +160,11 @@ static func clamp(_stat: StatCollection, _min: StatCollection, _max: StatCollect
 
     stat.movement_speed = clamp(_stat.movement_speed, _min.movement_speed, _max.movement_speed)
 
+    stat.omnivamp = clamp(_stat.omnivamp, _min.omnivamp, _max.omnivamp)
+    stat.physical_vamp = clamp(_stat.physical_vamp, _min.physical_vamp, _max.physical_vamp)
+    stat.magic_vamp = clamp(_stat.magic_vamp, _min.magic_vamp, _max.magic_vamp)
+    stat.true_vamp = clamp(_stat.true_vamp, _min.true_vamp, _max.true_vamp)
+
     return stat
 
 
@@ -147,4 +172,5 @@ static func sum(stats: Array[StatCollection]) -> StatCollection:
     var result = StatCollection.new()
     for stat in stats:
         result.add(stat)
+    
     return result

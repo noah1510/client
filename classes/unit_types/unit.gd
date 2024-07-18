@@ -28,6 +28,10 @@ signal died ()
 ## The signal does not contain any arguments and they have to be fetched from the unit itself.
 signal current_stats_changed ()
 
+## Emitted when the unit gets healed.
+## This signal is used to trigger extra healing effects.
+signal healed (caster: Unit, target: Unit, amount: float)
+
 ## Gets emitted on the caster when the windup of an attack is finished.
 ## Use this to spwan extra projectiles or apply effects to the caster.
 signal windup_finished (caster: Unit, target: Unit)
@@ -74,6 +78,9 @@ var level_exp : int = 0
 var required_exp : int = 100
 var dropped_exp : int = 0
 var exp_per_second: float = 0
+
+var overheal : bool = false
+var max_overheal : int = 0
 
 var current_gold : int = 0
 var dropped_gold : int = 0
@@ -143,6 +150,11 @@ func _init():
 
 
 func _ready():
+	_setup_scene_elements()
+	_setup_default_signals()
+
+
+func _setup_scene_elements():
 	# setting up the multiplayer synchronization
 	var replication_config = SceneReplicationConfig.new()
 
@@ -265,18 +277,36 @@ func _ready():
 	if not Config.show_all_attack_ranges:
 		attack_range_visualizer.hide()
 
-	# hook up the default combat signals
+
+func _setup_default_signals():
+	# update the healthbar when the stats change
 	current_stats_changed.connect(func (): _update_healthbar(healthbar))
 
+	# update the attack range visualizer when the stats change
 	current_stats_changed.connect(func ():
 		attack_range_visualizer.mesh.inner_radius = current_stats.attack_range * 0.99
 		attack_range_visualizer.mesh.outer_radius = current_stats.attack_range
 	)
 
-	windup_finished.connect(func (caster, target):
-		if caster == self: caster.attack(target)
-	)
+	# Do a basic attack when the windup is finished
+	# In cases the character is ranged spawn a projectile
+	# Otherwise just deal the damage directly
+	if projectile_config:
+		windup_finished.connect(func (caster, target):
+			if caster != self: return
+			if target != target_entity: return
 
+			projectile_spawner.spawn()
+		)
+	else:
+		windup_finished.connect(func (caster, target):
+			if caster != self: return
+			if target != target_entity: return
+
+			attack_connected.emit(self, target, should_crit())
+		)
+
+	# Deal the damage when the attack hits
 	attack_connected.connect(func (caster, target, is_crit):
 		if caster != self: return
 
@@ -284,6 +314,35 @@ func _ready():
 		if is_crit: damage *= (1 + current_stats.attack_crit_damage)
 
 		target.take_damage(caster, is_crit, DamageType.PHYSICAL, damage)
+	)
+
+	# Handle life steal after actual damage has been dealt
+	actual_damage_dealt.connect(func (caster: Unit, _target: Unit, _is_crit: bool, damage_type: DamageType, damage: int):
+		if caster != self: return
+
+		var total_vamp = current_stats.omnivamp
+		if damage_type == DamageType.PHYSICAL: total_vamp += current_stats.physical_vamp
+		if damage_type == DamageType.MAGICAL: total_vamp += current_stats.magic_vamp
+		if damage_type == DamageType.TRUE: total_vamp += current_stats.true_vamp
+
+		var heal_amount = damage * total_vamp
+		self.healed.emit(self, self, heal_amount)
+	)
+
+	# Handle healing effects being applied
+	healed.connect(func (_caster: Unit, target: Unit, amount: float):
+		if target != self: return
+
+		current_stats.health_max += int(amount)
+		if current_stats.health_max <= maximum_stats.health_max: return
+
+		if overheal:
+			var extra_health = current_stats.health_max - maximum_stats.health_max
+			current_shielding = clamp(current_shielding + extra_health, 0, max_overheal)
+		
+		current_stats.health_max = maximum_stats.health_max
+
+		current_stats_changed.emit()
 	)
 
 
@@ -315,6 +374,9 @@ func spawn_projectile(_args):
 func level_up(times: int = 1):
 	maximum_stats.add(per_level_stats, times)
 	current_stats.add(per_level_stats, times)
+
+	if player_controlled:
+		print("Level up!")
 	
 	current_stats_changed.emit()
 	
@@ -326,8 +388,8 @@ func give_exp(amount: int):
 	level_exp += amount
 	
 	while level_exp >= required_exp:
-		level_up()
 		level_exp -= required_exp
+		level_up()
 
 
 func reward_exp_on_death(murderer = null):
@@ -443,6 +505,7 @@ func take_damage(caster: Unit, is_crit: bool, damage_type: DamageType, damage_am
 		# if the damage is more than the shielding we need to perform the remaining damage calculation
 		if current_shielding <= 0:
 			actual_damage = -current_shielding
+			current_shielding = 0
 
 	# If the damage that need to be dealt is more that 0, we need to update the health
 	# and notify the caster that the damage was dealt.
@@ -459,13 +522,6 @@ func take_damage(caster: Unit, is_crit: bool, damage_type: DamageType, damage_am
 	current_stats_changed.emit()
 
 
-func attack(target):
-	if projectile_config:
-		projectile_spawner.spawn()
-	else:
-		attack_connected.emit(self, target, should_crit())
-
-
 func should_crit() -> bool:
 	if current_stats.attack_crit_chance < 0.0001: return false
 	if current_stats.attack_crit_chance > 0.9999: return true
@@ -473,17 +529,6 @@ func should_crit() -> bool:
 	var rand = RandomNumberGenerator.new()
 	rand.seed = int(map.time_elapsed*60)
 	return rand.randf() < current_stats.attack_crit_chance
-
-
-func heal(amount:float, keep_extra:bool = false):
-	current_stats.health_max += int(amount)
-	if current_stats.health_max <= maximum_stats.health_max: return
-	if keep_extra:
-		current_shielding = current_stats.health_max - maximum_stats.health_max
-	
-	current_stats.health_max = maximum_stats.health_max
-
-	current_stats_changed.emit()
 
 
 func die(murderer = null):
