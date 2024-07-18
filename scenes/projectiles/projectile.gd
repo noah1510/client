@@ -123,7 +123,10 @@ func _process(delta):
 	# If the projectile has hit, deal damage and destroy the projectile
 	if has_hit:
 		if multiplayer.is_server():
-			target.take_damage(caster, is_crit)
+			var damage = caster.current_stats.attack_damage
+			if is_crit: damage *= (1 + caster.current_stats.attack_crit_damage)
+
+			target.take_damage(caster, is_crit, Unit.DamageType.PHYSICAL, damage)
 		
 		queue_free()
 		return

@@ -1,13 +1,52 @@
-extends CharacterBody3D
+## The base class for all units in the game.
+## This class contains all the basic functionality that all units share.
+## It also sets up the scene of any unit.
+## This script is not supposed to be extended.
+## Instances should be created from the spawn functions in the spawner classes.
 class_name Unit
+extends CharacterBody3D
 
+
+## The types of damage that can be dealt.
+enum DamageType {
+	## True damage is not reduced by any resistance.
+	TRUE = 0,
+	## Physical damage is reduced by armor.
+	PHYSICAL = 1,
+	## Magical damage is reduced by magic resist.
+	MAGICAL = 2,
+}
 
 # Signals
+
+## Emitted when the unit dies.
+## This signal is used to clean up the unit and give rewards.
 signal died ()
 
+## Emitted every time the current stats of the unit change.
+## This signal is used to update the UI elements.
+## The signal does not contain any arguments and they have to be fetched from the unit itself.
 signal current_stats_changed ()
 
+## Gets emitted on the caster when the windup of an attack is finished.
+## Use this to spwan extra projectiles or apply effects to the caster.
 signal windup_finished (caster: Unit, target: Unit)
+
+## Gets emitted on the caster when the attack projectile hit the target or the melee attack landed.
+## Use this to apply effects to the target or the caster.
+## On hit damage effects should use this signal to apply additinal damage effects.
+signal attack_connected (caster: Unit, target: Unit, is_crit: bool)
+
+## Gets emitted on the caster after the target damage calculation has been done.
+## This signal is used to trigger post hit effects like healing or lifesteal.
+## Note that shielded damage is not included in the damage amount.
+signal actual_damage_dealt (caster: Unit, target: Unit, is_crit: bool, damage_type: DamageType, damage: int)
+
+## Each of these effects is a function that takes the caster, the target, the damage type, and the damage amount.
+## They should return the remaining damage after the effect has been applied.
+## The effects are applied in the order they are added to the array.
+## The remaining damage is then subject to the regular damage calculation.
+var _hit_reduction_effects : Array[Callable] = []
 
 # constant unit variables
 @export var id: int
@@ -238,6 +277,16 @@ func _ready():
 		if caster == self: caster.attack(target)
 	)
 
+	attack_connected.connect(func (caster, target, is_crit):
+		if caster != self: return
+
+		var damage = current_stats.attack_damage
+		if is_crit: damage *= (1 + current_stats.attack_crit_damage)
+
+		target.take_damage(caster, is_crit, DamageType.PHYSICAL, damage)
+	)
+
+
 func spawn_projectile(_args):
 	if not projectile_config:
 		print("Projectile config not set.")
@@ -361,34 +410,52 @@ func update_target_location(target_location: Vector3):
 
 
 ## Combat
-func take_damage(caster: Unit, is_crit: bool):
+func take_damage(caster: Unit, is_crit: bool, damage_type: DamageType, damage_amount: int):
 	if not can_take_damage(): return
 
-	var effective_armor = current_stats.armor
-	effective_armor *= (1.0 - caster.current_stats.armor_pen_percent / 100.0)
-	effective_armor -= caster.current_stats.armor_pen_flat
-	effective_armor = max(0, effective_armor)
+	# apply all damage reduction effects
+	var remaning_damage = damage_amount
+	for effect_call in _hit_reduction_effects:
+		remaning_damage = effect_call.call(caster, self, is_crit, damage_type, remaning_damage)
 
-	var taken = float(effective_armor) / 100.0
-	taken = caster.current_stats.attack_damage / (taken + 1)
-	if is_crit:
-		taken *= (1.0 + caster.current_stats.attack_crit_damage)
+	# get the correct resistance type depending on the damage type
+	# for true damage, the resistance is 0
+	var effective_resistance = 1.0
+	if damage_type == DamageType.PHYSICAL:
+		effective_resistance = current_stats.armor
+		effective_resistance *= (1.0 - caster.current_stats.armor_pen_percent / 100.0)
+		effective_resistance -= caster.current_stats.armor_pen_flat
+		effective_resistance = max(0.0, effective_resistance / 100.0) + 1.0
+	elif damage_type == DamageType.MAGICAL:
+		effective_resistance = current_stats.magic_resist
+		effective_resistance *= (1.0 - caster.current_stats.magic_pen_percent / 100.0)
+		effective_resistance -= caster.current_stats.magic_pen_flat
+		effective_resistance = max(0.0, effective_resistance / 100.0) + 1.0
 
-	var actual_damage = int(taken)
+	# calculate the remaining damage after resistance
+	remaning_damage /= effective_resistance
+	var actual_damage = int(remaning_damage)
+
+	# handle shielding
 	if current_shielding > 0:
 		current_shielding -= actual_damage
+
+		# if the damage is more than the shielding we need to perform the remaining damage calculation
 		if current_shielding <= 0:
-			# since current_shielding is negative, we add it to
-			# health_max to subtract the remaining shielding
-			current_stats.health_max += current_shielding
-			current_shielding = 0
-	else:
+			actual_damage = -current_shielding
+
+	# If the damage that need to be dealt is more that 0, we need to update the health
+	# and notify the caster that the damage was dealt.
+	if actual_damage > 0:
 		current_stats.health_max -= actual_damage
+		caster.actual_damage_dealt.emit(caster, self, is_crit, damage_type, actual_damage)
 	
+	# If the health is 0 or less, the unit dies and we register the caster as the murderer.
 	if current_stats.health_max <= 0:
 		current_stats.health_max = 0
 		die(caster)
-		
+	
+	# This simply updates all UI elements with the latest stats
 	current_stats_changed.emit()
 
 
@@ -396,7 +463,7 @@ func attack(target):
 	if projectile_config:
 		projectile_spawner.spawn()
 	else:
-		target.take_damage(self, should_crit())
+		attack_connected.emit(self, target, should_crit())
 
 
 func should_crit() -> bool:
