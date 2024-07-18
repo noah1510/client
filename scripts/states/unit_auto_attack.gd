@@ -36,11 +36,8 @@ func modify(entity: Unit, _args = null):
 	
 	if not target_unit.is_alive:
 		print("Target is dead, going back to idle state")
-		entity.change_state("Idle", null)
+		entity.advance_state()
 		return
-
-	if entity.position.distance_to(target_unit.position) > entity.current_stats.attack_range:
-		entity.change_state("Idle", null)
 		
 
 func exit(_entity: Unit):
@@ -49,23 +46,24 @@ func exit(_entity: Unit):
 
 
 func update_tick_server(entity: Unit, delta):
+	entity.nav_agent.target_position = entity.global_position
+
 	if not entity.target_entity: 
-		entity.change_state("Idle", null)
+		entity.advance_state()
 		return
 	
-	if entity.target_entity.current_stats.health_max <= 0: 
-		entity.change_state("Idle", null)
+	if not entity.target_entity.is_alive: 
+		entity.advance_state()
 		return
 	
-	var target_direction = entity.target_entity.global_position - entity.global_position
-	if target_direction.length() <= entity.current_stats.attack_range:
+	if entity.target_entity.global_position.distance_to(entity.global_position) < entity.current_stats.attack_range:
 		start_windup(entity)
 		return
 
-	var step_size = entity.current_stats.movement_speed * delta
-	var new_movement_position = entity.global_position + target_direction.normalized() * step_size
-	entity.change_state("Moving", new_movement_position)
-	entity.queue_state_change("Attacking", entity.target_entity)
+	if not windup_timer.is_stopped(): return
+
+	entity.nav_agent.target_position = entity.target_entity.global_position
+	entity.move_on_path(delta)
 	
 
 func start_windup(entity):
@@ -83,5 +81,5 @@ func start_windup(entity):
 func do_attack(entity):
 	if not entity.can_attack(): return
 
-	entity.attack()
+	entity.windup_finished.emit(entity, entity.target_entity)
 	cooldown_timer.start()

@@ -3,9 +3,11 @@ class_name Unit
 
 
 # Signals
-signal died
+signal died ()
 
-signal current_stats_changed
+signal current_stats_changed ()
+
+signal windup_finished (caster: Unit, target: Unit)
 
 # constant unit variables
 @export var id: int
@@ -206,7 +208,6 @@ func _ready():
 	healthbar = get_node("Healthbar")
 	healthbar.max_value = maximum_stats.health_max
 	healthbar.sync(current_stats.health_max)
-	current_stats_changed.connect(func (): _update_healthbar(healthbar))
 
 	# set up the attack range visualizer
 	var attack_range_mesh = TorusMesh.new()
@@ -222,13 +223,20 @@ func _ready():
 	add_child(attack_range_visualizer)
 	attack_range_visualizer = get_node("AttackRangeVisualizer")
 
+	if not Config.show_all_attack_ranges:
+		attack_range_visualizer.hide()
+
+	# hook up the default combat signals
+	current_stats_changed.connect(func (): _update_healthbar(healthbar))
+
 	current_stats_changed.connect(func ():
 		attack_range_visualizer.mesh.inner_radius = current_stats.attack_range * 0.99
 		attack_range_visualizer.mesh.outer_radius = current_stats.attack_range
 	)
-	
-	if not Config.show_all_attack_ranges:
-		attack_range_visualizer.hide()
+
+	windup_finished.connect(func (caster, target):
+		if caster == self: caster.attack(target)
+	)
 
 func spawn_projectile(_args):
 	if not projectile_config:
@@ -384,11 +392,11 @@ func take_damage(caster: Unit, is_crit: bool):
 	current_stats_changed.emit()
 
 
-func attack():
+func attack(target):
 	if projectile_config:
 		projectile_spawner.spawn()
 	else:
-		target_entity.take_damage(self, should_crit())
+		target.take_damage(self, should_crit())
 
 
 func should_crit() -> bool:
@@ -428,19 +436,22 @@ func _update_healthbar(node: ProgressBar):
 
 
 func move_on_path(delta: float) -> bool:
+	## return true if target position was reached, false otherwise
+
 	if nav_agent.is_navigation_finished(): return true
 	if not can_move(): return false
 
 	server_position = global_position
-	nav_agent.target_desired_distance = 0.01
-	
-	var step_length = current_stats.movement_speed * delta
+	nav_agent.target_desired_distance = 0.025
+	nav_agent.simplify_path = true
 
 	var target_location = nav_agent.get_next_path_position()
 	var direction = target_location - global_position
+	var actual_speed = current_stats.movement_speed / 100.0
 	
-	nav_agent.velocity = direction.normalized() * step_length
-	velocity = direction.normalized() * step_length
+	nav_agent.velocity = direction.normalized() * actual_speed
+	velocity = direction.normalized() * actual_speed
+
 	rotation.y = lerp_angle(rotation.y, atan2(-direction.x, -direction.z), turn_speed * delta)
 
 	move_and_slide()
@@ -518,4 +529,9 @@ func change_state(new, args):
 
 @rpc("authority", "call_local")
 func queue_state_change(new, args):
-	$StateMachine._queue_state(new, args)
+	$StateMachine.queue_state(new, args)
+
+
+@rpc("authority", "call_local")
+func advance_state():
+	$StateMachine.advance_state()

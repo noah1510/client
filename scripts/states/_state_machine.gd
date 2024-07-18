@@ -22,10 +22,6 @@ func _ready():
 		current_state = initial_state
 
 
-func _queue_state(state_name, args = null):
-	queued_states.append([state_name, args])
-
-
 func _process(delta):
 	if not current_state: return
 	current_state.update(entity, delta);
@@ -37,7 +33,19 @@ func _physics_process(delta):
 		current_state.update_tick_server(entity, delta)
 	else:
 		current_state.update_tick_client(entity, delta)
-	
+
+
+func queue_state(state_name, args = null):
+	queued_states.append([state_name, args])
+
+
+func advance_state():
+	if queued_states.size() > 0:
+		var next_state = queued_states.pop_front()
+		change_state(next_state[0], next_state[1])
+	else:
+		change_state("Idle", null)
+
 
 func change_state(new_state_name, args = null):
 	if not states.has(new_state_name): return
@@ -58,10 +66,3 @@ func change_state(new_state_name, args = null):
 	
 	new_state.enter(entity, args)
 	current_state = new_state
-
-	if new_state_name == "Idle":
-		if queued_states.size() > 0:
-			var next_state = queued_states.pop_front()
-			change_state(next_state[0], next_state[1])
-	else:
-		queued_states.clear()

@@ -10,13 +10,14 @@ func update_tick_server(entity: Unit, delta):
 	super(entity, delta)
 	
 	if entity.move_on_path(delta):
-		entity.change_state("Idle", null)
+		entity.advance_state()
 
 
 func modify(entity: Unit, args):
 	var target_pos = args as Vector3
 	if not target_pos:
 		print("No target position provided or not a Vector3")
+		entity.advance_state()
 		return
 
 	# Update Target Position

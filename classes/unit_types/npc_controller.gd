@@ -7,6 +7,7 @@ var aggro_distance: float = 1.0
 var deaggro_distance: float = 3.0
 
 var aggro_collider: Area3D
+var deaggro_collider: Area3D
 
 var controlled_unit: Unit
 
@@ -40,7 +41,7 @@ func _ready():
 	var deaggro_collision_shape = CollisionShape3D.new()
 	deaggro_collision_shape.shape = deaggro_shape
 
-	var deaggro_collider = Area3D.new()
+	deaggro_collider = Area3D.new()
 	deaggro_collider.name = "DeaggroCollider"
 	deaggro_collider.add_child(deaggro_collision_shape)
 
@@ -50,11 +51,21 @@ func _ready():
 
 
 func _process(_delta):
-	if not controlled_unit.target_entity: return
+	aggro_collider.global_transform.origin = controlled_unit.global_transform.origin
+	deaggro_collider.global_transform.origin = controlled_unit.global_transform.origin
+
+	if not controlled_unit.target_entity:
+		var potential_collisions = aggro_collider.get_overlapping_bodies()
+		for body in potential_collisions:
+			_enter_aggro_range(body)
+		
+		if not controlled_unit.target_entity:
+			controlled_unit.advance_state()
+			return
 	
-	if controlled_unit.target_entity.is_alive == false:
+	if not controlled_unit.target_entity.is_alive:
 		controlled_unit.target_entity = null
-		controlled_unit.change_state("Idle", null)
+		controlled_unit.advance_state()
 		return
 
 
