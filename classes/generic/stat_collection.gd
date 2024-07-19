@@ -94,6 +94,40 @@ static func from_dict(json_data_object: Dictionary) -> StatCollection:
     return stat
 
 
+func to_dict() -> Dictionary:
+    var json_data_object = {}
+    
+    json_data_object["health_max"] = health_max
+    json_data_object["health_regen"] = health_regen
+
+    json_data_object["mana_max"] = mana_max
+    json_data_object["mana_regen"] = mana_regen
+
+    json_data_object["armor"] = armor
+    json_data_object["magic_resist"] = magic_resist
+
+    json_data_object["armor_pen_flat"] = armor_pen_flat
+    json_data_object["armor_pen_percent"] = armor_pen_percent
+
+    json_data_object["magic_pen_flat"] = magic_pen_flat
+    json_data_object["magic_pen_percent"] = magic_pen_percent
+
+    json_data_object["attack_damage"] = attack_damage
+    json_data_object["attack_speed"] = attack_speed
+    json_data_object["attack_range"] = attack_range
+    json_data_object["attack_crit_chance"] = attack_crit_chance
+    json_data_object["attack_crit_damage"] = attack_crit_damage
+
+    json_data_object["omnivamp"] = omnivamp
+    json_data_object["physical_vamp"] = physical_vamp
+    json_data_object["magic_vamp"] = magic_vamp
+    json_data_object["true_vamp"] = true_vamp
+
+    json_data_object["movement_speed"] = movement_speed
+    
+    return json_data_object
+
+
 func get_copy() -> StatCollection:
     var stat = StatCollection.new()
     stat.add(self)

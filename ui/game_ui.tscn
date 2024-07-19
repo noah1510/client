@@ -534,12 +534,10 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_nd5bo")
 
 [node name="Portrait" type="TextureRect" parent="CharacterUI"]
 layout_mode = 0
-offset_left = 5.0
-offset_top = 5.0
-offset_right = 74.0
-offset_bottom = 80.0
+offset_right = 69.0
+offset_bottom = 75.0
 texture = ExtResource("9_bog4o")
-expand_mode = 4
+expand_mode = 3
 
 [node name="PortraitBorder" type="Panel" parent="CharacterUI/Portrait"]
 z_index = 1

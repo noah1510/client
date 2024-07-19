@@ -1,8 +1,9 @@
 extends RegistryBase
 class_name ItemRegistry
 
-var _internal_values: Dictionary = {}
+@export var highest_item_tier : int = -1
 
+var _internal_values: Dictionary = {}
 
 func _init():
 	_json_type = "item"
@@ -16,13 +17,35 @@ func get_element(_item: String):
 	return _internal_values[_item]
 
 
+func get_all_where(condition: Callable) -> Array[Item]:
+	var item_list : Array[Item] = []
+	var all_items = _internal_values.values()
+	for _item in all_items:
+		if condition.call(_item):
+			item_list.append(_item)
+	
+	return item_list
+
+
+func get_all_in_tier(searched_tier: int) -> Array[Item]:
+	if searched_tier > highest_item_tier:
+		return []
+	
+	return get_all_where(func (_item:Item) -> bool:
+		return _item.item_tier == searched_tier
+	)
+	
+
 func assure_validity():
 	var item_names = _internal_values.keys()
 	for item_name in item_names:
-		var item = _internal_values[item_name]
+		var item : Item = _internal_values[item_name]
 		if not item.is_valid(self):
 			print("Item (%s): Invalid item." % item_name)
 			_internal_values.erase(item_name)
+		
+		if item.item_tier > highest_item_tier:
+			highest_item_tier = item.item_tier
 
 
 func load_from_json(_json: Dictionary) -> bool:
@@ -54,7 +77,7 @@ func load_from_json(_json: Dictionary) -> bool:
 		print("Item (%s): No texture provided." % item_id_str)
 		return false
 
-	var texture_id := Identifier.from_string(_json_data["texture"])
+	var texture_id := Identifier.for_resource("texture://" + str(_json_data["texture"]))
 
 	if not _json_data.has("recipe"):
 		print("Item (%s): No recipe provided." % item_id_str)

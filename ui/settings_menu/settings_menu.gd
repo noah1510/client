@@ -17,29 +17,29 @@ extends Control
 func _ready():
 	hide()
 	visibility_changed.connect(on_show)
-	hidden.connect(on_hide)
 	
 	ExitBtn.pressed.connect(_on_game_close_pressed)
 	ConfirmBtn.pressed.connect(_on_confirm_changes)
 
 
 func _input(event):
-	if event.is_action_pressed("player_pause"):
-		if visible:
-			hide()
-		else:
-			show()
- 
-
-func on_hide():
-	Config.in_focued_menu = false
-
-
-func on_show():
-	if not visible:
+	if not event.is_action_pressed("player_pause"):
 		return
 	
-	Config.in_focued_menu = true
+	if visible:
+		hide()
+	else:
+		# make sure we aren't already in a different menu
+		if Config.in_focued_menu:
+			return
+		
+		show()
+ 
+
+func on_show():
+	Config.in_focued_menu = visible
+	if not visible:
+		return
 	
 	fullscreen_toggle.button_pressed = Config.graphics_settings.is_fullscreen
 	

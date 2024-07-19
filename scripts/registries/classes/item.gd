@@ -20,6 +20,26 @@ func get_id() -> Identifier:
 	return id
 
 
+func get_desctiption_strings() -> Dictionary:
+	var item_descriptions = {}
+	item_descriptions["name"] = tr("ITEM:%s:NAME" % id.to_string())
+	item_descriptions["lore"] = tr("ITEM:%s:LORE" % id.to_string())
+	item_descriptions["cost"] = tr("ITEM:COST_LABEL") % calculate_gold_cost()
+
+	var stats_dict = stats.to_dict()
+	var item_stat_string = ""
+	for stat in stats_dict.keys():
+		var stat_value = stats_dict[stat]
+		if stat_value == 0:
+			continue
+		
+		item_stat_string += tr("STAT:%s:NAME" % stat) + ": " + str(stats_dict[stat]) + "\n"
+
+	item_descriptions["stats"] = item_stat_string
+
+	return item_descriptions
+
+
 func get_texture_resource() -> Identifier:
 	if texture_id.is_valid():
 		if AssetIndexer.get_asset_path(texture_id) != "":

@@ -24,6 +24,7 @@ var last_player_index = 0
 
 const player_desktop_hud = preload("res://ui/game_ui.tscn")
 const player_desktop_settings = preload("res://ui/settings_menu/settings_menu.tscn")
+const player_item_shop = preload("res://ui/shops/item_shop.tscn")
 
 
 func _ready():
@@ -167,6 +168,10 @@ func client_setup():
 	var hud = player_desktop_hud.instantiate()
 	hud._map = self
 	add_child(hud)
+	
+	var item_shop = player_item_shop.instantiate()
+	
+	add_child(item_shop)
 
 
 func on_player_death(player_id: int):
