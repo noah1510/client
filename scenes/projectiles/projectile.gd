@@ -124,7 +124,7 @@ func _process(delta):
 	if has_hit:
 		if multiplayer.is_server():
 			var damage = caster.current_stats.attack_damage
-			if is_crit: damage *= (1 + caster.current_stats.attack_crit_damage)
+			if is_crit: damage *= (100 + caster.current_stats.attack_crit_damage) * 0.01
 
 			target.take_damage(caster, is_crit, Unit.DamageType.PHYSICAL, damage)
 		

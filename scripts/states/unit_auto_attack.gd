@@ -56,7 +56,7 @@ func update_tick_server(entity: Unit, delta):
 		entity.advance_state()
 		return
 	
-	if entity.target_entity.global_position.distance_to(entity.global_position) < entity.current_stats.attack_range:
+	if entity.target_entity.global_position.distance_to(entity.global_position) < (entity.current_stats.attack_range * 0.01):
 		start_windup(entity)
 		return
 
@@ -71,7 +71,7 @@ func start_windup(entity):
 	if not windup_timer.is_stopped(): return
 	if not cooldown_timer.is_stopped(): return
 
-	var attack_time = float(1.0 / entity.current_stats.attack_speed)
+	var attack_time = float(100.0 / entity.current_stats.attack_speed)
 	windup_timer.wait_time = attack_time * entity.windup_fraction
 	cooldown_timer.wait_time = attack_time * (1.0-entity.windup_fraction)
 	

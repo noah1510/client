@@ -1,65 +1,95 @@
-extends Object
+## This class is used to store all the stats of a unit.
+## All stats are stored as integers to prevent floating point errors.
 class_name StatCollection
+extends Object
 
+
+## The actual health value of the unit.
 @export var health_max: int = 0
-@export var health_regen: float = 0
+## The amount of health the unit regenerates per 5 seconds.
+@export var health_regen: int = 0
 
+## The actual mana value of the unit.
 @export var mana_max: int = 0
-@export var mana_regen: float = 0
+## The amount of mana the unit regenerates per 5 seconds.
+@export var mana_regen: int = 0
 
+## The physical damage reduction of the unit.
 @export var armor: int = 0
+## The magic damage reduction of the unit.
 @export var magic_resist: int = 0
 
+## The amount of flat armor penetration the unit has.
 @export var armor_pen_flat: int = 0
-@export var armor_pen_percent: float = 0
+## The amount of percentage armor penetration the unit has. (0 - 100)
+@export var armor_pen_percent: int = 0
 
+## The amount of flat magic penetration the unit has.
 @export var magic_pen_flat: int = 0
-@export var magic_pen_percent: float = 0
+## The amount of percentage magic penetration the unit has. (0 - 100)
+@export var magic_pen_percent: int = 0
 
+## The amount of physical damage the unit deals.
 @export var attack_damage: int = 0
-@export var attack_speed: float = 0
-@export var attack_range: float = 0
-@export var attack_crit_chance: float = 0
-@export var attack_crit_damage: float = 0
+## The attack speed of the unit.
+## Because of we need to use int for everything to prevent floating point errors,
+## the attack speed is stored as 100 times the expected float value.
+## This means that values below 100 are less than 1 attack per second,
+## and values above 100 are more than 1 attack per second.
+## Every 100 points is 1 attack per second.
+@export var attack_speed: int = 0
+## The attack range of the unit in centimeters.
+## 100 centimeters is 1 meter for those now fluent in the metric system.
+@export var attack_range: int = 0
+## The chance of the unit to deal a critical strike in percentage (0 - 100).
+@export var attack_crit_chance: int = 0
+## The amount of bonus damage the unit deals on a critical strike in percentage (> 0)
+@export var attack_crit_damage: int = 0
 
-@export var omnivamp: float = 0
-@export var physical_vamp: float = 0
-@export var magic_vamp: float = 0
-@export var true_vamp: float = 0
+## The percentage of post-mitigation damage dealt by the unit that is returned as healing (0-100).
+## To calculate the actual percentage the omnivamp value is added to the physical, magic and true vamp values depending on the damage type.
+@export var omnivamp: int = 0
+## The percentage of post-mitigation physical damage dealt by the unit that is returned as healing (0-100).
+@export var physical_vamp: int = 0
+## The percentage of post-mitigation magic damage dealt by the unit that is returned as healing (0-100).
+@export var magic_vamp: int = 0
+## The percentage of post-mitigation true damage dealt by the unit that is returned as healing (0-100).
+@export var true_vamp: int = 0
 
-@export var movement_speed: float = 0
+## The movement speed of the unit in centimeters per second.
+@export var movement_speed: int = 0
 
 
 static func from_dict(json_data_object: Dictionary) -> StatCollection:
     var stat = StatCollection.new()
     
     stat.health_max = JsonHelper.get_optional_int(json_data_object, "health_max", 0)
-    stat.health_regen = JsonHelper.get_optional_number(json_data_object, "health_regen", 0.0)
+    stat.health_regen = JsonHelper.get_optional_int(json_data_object, "health_regen", 0)
 
     stat.mana_max = JsonHelper.get_optional_int(json_data_object, "mana_max", 0)
-    stat.mana_regen = JsonHelper.get_optional_number(json_data_object, "mana_regen", 0.0)
+    stat.mana_regen = JsonHelper.get_optional_int(json_data_object, "mana_regen", 0)
 
     stat.armor = JsonHelper.get_optional_int(json_data_object, "armor", 0)
     stat.magic_resist = JsonHelper.get_optional_int(json_data_object, "magic_resist", 0)
 
     stat.armor_pen_flat = JsonHelper.get_optional_int(json_data_object, "armor_pen_flat", 0)
-    stat.armor_pen_percent = JsonHelper.get_optional_number(json_data_object, "armor_pen_percent", 0.0)
+    stat.armor_pen_percent = JsonHelper.get_optional_int(json_data_object, "armor_pen_percent", 0)
 
     stat.magic_pen_flat = JsonHelper.get_optional_int(json_data_object, "magic_pen_flat", 0)
-    stat.magic_pen_percent = JsonHelper.get_optional_number(json_data_object, "magic_pen_percent", 0.0)
+    stat.magic_pen_percent = JsonHelper.get_optional_int(json_data_object, "magic_pen_percent", 0)
 
     stat.attack_damage = JsonHelper.get_optional_int(json_data_object, "attack_damage", 0)
-    stat.attack_speed = JsonHelper.get_optional_number(json_data_object, "attack_speed", 0.0)
-    stat.attack_range = JsonHelper.get_optional_number(json_data_object, "attack_range", 0.0)
-    stat.attack_crit_chance = JsonHelper.get_optional_number(json_data_object, "attack_crit_chance", 0.0)
-    stat.attack_crit_damage = JsonHelper.get_optional_number(json_data_object, "attack_crit_damage", 0.0)
+    stat.attack_speed = JsonHelper.get_optional_int(json_data_object, "attack_speed", 0)
+    stat.attack_range = JsonHelper.get_optional_int(json_data_object, "attack_range", 0)
+    stat.attack_crit_chance = JsonHelper.get_optional_int(json_data_object, "attack_crit_chance", 0)
+    stat.attack_crit_damage = JsonHelper.get_optional_int(json_data_object, "attack_crit_damage", 0)
 
-    stat.movement_speed = JsonHelper.get_optional_number(json_data_object, "movement_speed", 0.0)
+    stat.omnivamp = JsonHelper.get_optional_int(json_data_object, "omnivamp", 0)
+    stat.physical_vamp = JsonHelper.get_optional_int(json_data_object, "physical_vamp", 0)
+    stat.magic_vamp = JsonHelper.get_optional_int(json_data_object, "magic_vamp", 0)
+    stat.true_vamp = JsonHelper.get_optional_int(json_data_object, "true_vamp", 0)
 
-    stat.omnivamp = JsonHelper.get_optional_number(json_data_object, "omnivamp", 0.0)
-    stat.physical_vamp = JsonHelper.get_optional_number(json_data_object, "physical_vamp", 0.0)
-    stat.magic_vamp = JsonHelper.get_optional_number(json_data_object, "magic_vamp", 0.0)
-    stat.true_vamp = JsonHelper.get_optional_number(json_data_object, "true_vamp", 0.0)
+    stat.movement_speed = JsonHelper.get_optional_int(json_data_object, "movement_speed", 0)
     
     return stat
 

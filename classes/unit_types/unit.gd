@@ -125,7 +125,7 @@ func _init():
 	if maximum_stats == null:
 		maximum_stats = StatCollection.from_dict({
 			"health_max": 640,
-			"health_regen": 3.5,
+			"health_regen": 35,
 
 			"mana_max": 280,
 			"mana_regen": 7,
@@ -133,9 +133,9 @@ func _init():
 			"armor": 26,
 			"magic_resist": 30,
 
-			"attack_range": 3.0,
+			"attack_range": 300,
 			"attack_damage": 60,
-			"attack_speed": 0.75,
+			"attack_speed": 75,
 
 			"movement_speed": 100,
 		} as Dictionary)
@@ -262,8 +262,8 @@ func _setup_scene_elements():
 
 	# set up the attack range visualizer
 	var attack_range_mesh = TorusMesh.new()
-	attack_range_mesh.inner_radius = current_stats.attack_range * 0.99
-	attack_range_mesh.outer_radius = current_stats.attack_range
+	attack_range_mesh.inner_radius = current_stats.attack_range * 0.0099
+	attack_range_mesh.outer_radius = current_stats.attack_range * 0.01
 
 	attack_range_visualizer = MeshInstance3D.new()
 	attack_range_visualizer.name = "AttackRangeVisualizer"
@@ -277,6 +277,29 @@ func _setup_scene_elements():
 	if not Config.show_all_attack_ranges:
 		attack_range_visualizer.hide()
 
+	# set up the timer for passive healing and mana regen
+	var passive_heal_timer := Timer.new()
+	passive_heal_timer.name = "PassiveHealTimer"
+	passive_heal_timer.one_shot = false
+	passive_heal_timer.autostart = true
+	passive_heal_timer.wait_time = 5.0
+	passive_heal_timer.process_callback = Timer.TIMER_PROCESS_PHYSICS
+	passive_heal_timer.timeout.connect(func ():
+		if not is_alive: return
+
+		# first we regen the mana
+		current_stats.mana_max += current_stats.mana_regen
+		if current_stats.mana_max > maximum_stats.mana_max:
+			current_stats.mana_max = maximum_stats.mana_max
+		
+		# then we emit the healed signal with the amount of health regen
+		# This is used to trigger extra healing effects.
+		# The healed signal will also trigger the current_stats_changed signal
+		# which will update the UI elements.
+		healed.emit(self, self, current_stats.health_regen)
+	)
+	add_child(passive_heal_timer)
+
 
 func _setup_default_signals():
 	# update the healthbar when the stats change
@@ -284,8 +307,8 @@ func _setup_default_signals():
 
 	# update the attack range visualizer when the stats change
 	current_stats_changed.connect(func ():
-		attack_range_visualizer.mesh.inner_radius = current_stats.attack_range * 0.99
-		attack_range_visualizer.mesh.outer_radius = current_stats.attack_range
+		attack_range_visualizer.mesh.inner_radius = current_stats.attack_range * 0.0099
+		attack_range_visualizer.mesh.outer_radius = current_stats.attack_range * 0.01
 	)
 
 	# Do a basic attack when the windup is finished
@@ -311,7 +334,7 @@ func _setup_default_signals():
 		if caster != self: return
 
 		var damage = current_stats.attack_damage
-		if is_crit: damage *= (1 + current_stats.attack_crit_damage)
+		if is_crit: damage *= (100 + current_stats.attack_crit_damage) * 0.01
 
 		target.take_damage(caster, is_crit, DamageType.PHYSICAL, damage)
 	)
@@ -325,7 +348,7 @@ func _setup_default_signals():
 		if damage_type == DamageType.MAGICAL: total_vamp += current_stats.magic_vamp
 		if damage_type == DamageType.TRUE: total_vamp += current_stats.true_vamp
 
-		var heal_amount = damage * total_vamp
+		var heal_amount = damage * total_vamp * 0.01
 		self.healed.emit(self, self, heal_amount)
 	)
 
@@ -334,14 +357,14 @@ func _setup_default_signals():
 		if target != self: return
 
 		current_stats.health_max += int(amount)
-		if current_stats.health_max <= maximum_stats.health_max: return
 
-		if overheal:
-			var extra_health = current_stats.health_max - maximum_stats.health_max
-			current_shielding = clamp(current_shielding + extra_health, 0, max_overheal)
+		if current_stats.health_max >= maximum_stats.health_max: 
+			if overheal:
+				var extra_health = current_stats.health_max - maximum_stats.health_max
+				current_shielding = clamp(current_shielding + extra_health, 0, max_overheal)
+			
+			current_stats.health_max = maximum_stats.health_max
 		
-		current_stats.health_max = maximum_stats.health_max
-
 		current_stats_changed.emit()
 	)
 
@@ -523,12 +546,12 @@ func take_damage(caster: Unit, is_crit: bool, damage_type: DamageType, damage_am
 
 
 func should_crit() -> bool:
-	if current_stats.attack_crit_chance < 0.0001: return false
-	if current_stats.attack_crit_chance > 0.9999: return true
+	if current_stats.attack_crit_chance <= 0: return false
+	if current_stats.attack_crit_chance >= 100: return true
 
 	var rand = RandomNumberGenerator.new()
 	rand.seed = int(map.time_elapsed*60)
-	return rand.randf() < current_stats.attack_crit_chance
+	return rand.randi_range(0, 100) < current_stats.attack_crit_chance
 
 
 func die(murderer = null):

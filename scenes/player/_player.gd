@@ -176,7 +176,7 @@ func _player_action_attack_near(center: Vector3, target_mode = null) -> bool:
 	var closest_unit = null
 	var closest_distance = 1000000
 
-	attack_collider.get_child(0).shape.radius = character.current_stats.attack_range
+	attack_collider.get_child(0).shape.radius = character.current_stats.attack_range * 0.01
 	attack_collider.global_transform.origin = character.server_position
 
 	var bodies = attack_collider.get_overlapping_bodies()
@@ -191,7 +191,7 @@ func _player_action_attack_near(center: Vector3, target_mode = null) -> bool:
 		if not unit.player_controlled and not target_minions: continue
 		if unit.is_structure and not target_structures: continue
 
-		if unit.global_position.distance_to(character.global_position) > character.current_stats.attack_range: continue
+		if unit.global_position.distance_to(character.global_position) > (character.current_stats.attack_range * 0.01): continue
 
 		var distance = unit.global_position.distance_to(center)
 		if distance > closest_distance: continue
