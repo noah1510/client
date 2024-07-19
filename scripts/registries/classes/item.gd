@@ -2,6 +2,7 @@ class_name Item extends Object
 
 var gold_cost: int = 0
 var components: Array[String] = []
+var item_tier: int = -1
 
 var stats = StatCollection.new()
 
@@ -9,12 +10,23 @@ var id: Identifier
 var texture_id: Identifier
 
 
+func get_copy() -> Item:
+	var new_item = Item.new(id, texture_id, gold_cost, components, stats)
+	new_item.item_tier = item_tier
+	return new_item
+
+
 func get_id() -> Identifier:
 	return id
 
 
-func get_texture_id() -> Identifier:
-	return texture_id
+func get_texture_resource() -> Identifier:
+	if texture_id.is_valid():
+		if AssetIndexer.get_asset_path(texture_id) != "":
+			return texture_id
+	
+	print("Item (%s): Texture asset not found." % id.to_string())
+	return Identifier.for_resource("texture://openchamp:placeholder")
 
 
 func get_stats() -> StatCollection:
@@ -39,6 +51,11 @@ func calculate_gold_cost() -> int:
 
 
 func is_valid(item_registry: RegistryBase = null) -> bool:
+	# This is a fast pass to avoid checking the item's components if it's already been validated
+	# By default the item_tier is set to -1, so if it's not negative, it's already been validated
+	if item_tier >= 0:
+		return true
+	
 	if item_registry == null:
 		item_registry = RegistryManager.items()
 
@@ -51,6 +68,7 @@ func is_valid(item_registry: RegistryBase = null) -> bool:
 	if gold_cost < 0:
 		return false
 
+	var highest_tier = -1
 	if components.size() > 0:
 		for component in components:
 			if not Identifier.from_string(component).is_valid():
@@ -58,7 +76,17 @@ func is_valid(item_registry: RegistryBase = null) -> bool:
 
 			if not item_registry.contains(component):
 				return false
+
+			var comp_item = item_registry.get_element(component)
+			if comp_item.item_tier < 0:
+				if not comp_item.is_valid(item_registry):
+					return false
 			
+			if comp_item.item_tier > highest_tier:
+				highest_tier = comp_item.item_tier
+			
+	item_tier = highest_tier + 1
+
 	return true
 
 
