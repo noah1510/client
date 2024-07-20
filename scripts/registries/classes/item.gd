@@ -60,7 +60,7 @@ func get_combine_cost() -> int:
 func calculate_gold_cost() -> int:
 	var cost = gold_cost
 	for component in components:
-		var item = RegistryManager.items().get(component)
+		var item = RegistryManager.items().get_element(component)
 		if item == null:
 			print("Item (%s): Component item not found." % component)
 			continue

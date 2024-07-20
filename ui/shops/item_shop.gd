@@ -2,6 +2,7 @@ extends Control
 
 @onready var item_lists_container : BoxContainer = $ScrollContainer/ItemListsContainer
 
+var player_instance : Node
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -48,11 +49,19 @@ func _ready() -> void:
 				item_desctiptions["stats"],
 				item_desctiptions["cost"]
 			]
-			item_image.mouse_filter = Control.MOUSE_FILTER_STOP
 
 			var item_container = AspectRatioContainer.new()
 			item_container.size = Vector2(64, 64)
 			item_container.custom_minimum_size = Vector2(64, 64)
+			item_container.mouse_filter = Control.MOUSE_FILTER_STOP
+
+			var item_id_str = _item.get_id().to_string()
+			item_container.name = item_id_str
+			item_container.gui_input.connect(
+				func asset_callback(input_event):
+					try_purchase_item(input_event, item_id_str)
+			)
+
 			item_container.add_child(item_image)
 
 			_item_tier_box.add_child(item_container)
@@ -66,6 +75,25 @@ func _ready() -> void:
 	item_lists_container.add_spacer(false)
 
 	hide()
+
+
+func try_purchase_item(input_event, item_name: String) -> void:
+	if not (input_event is InputEventMouseButton):
+		return
+
+	if input_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+
+	if not input_event.is_pressed():
+		return
+
+	var item = RegistryManager.items().get_element(item_name) as Item
+	if item == null:
+		print("Item (%s) not found in registry." % item_name)
+		return
+
+	print("Request purchase of item (%s) from server" % item_name)
+	player_instance.try_purchasing_item(item_name)
 
 
 func _input(event: InputEvent) -> void:

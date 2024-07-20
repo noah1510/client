@@ -56,6 +56,9 @@ func _ready():
 
 func _input(event):
 	if Config.is_dedicated_server: return;
+
+	if Config.in_focued_menu:
+		return
 	
 	if event is InputEventMouseButton:
 		
@@ -342,6 +345,10 @@ func get_character(pid: int) -> Node:
 		return null
 	else:
 		return character
+
+
+func try_purchasing_item(item_name: String) -> void:
+	server_listener.rpc_id(get_multiplayer_authority(), "try_purchase_item", item_name)
 
 
 func _on_camera_setting_changed():

@@ -44,6 +44,10 @@ Character="A player character"
 Map="Valid Map"
 Ground="Map Floor"
 
+[gui]
+
+timers/tooltip_delay_sec=0.25
+
 [input]
 
 camera_left={

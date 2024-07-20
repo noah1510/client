@@ -105,6 +105,8 @@ var assists : int = 0
 
 var minion_kills: int = 0
 
+var item_list : Array[Item] = []
+
 # Each bit of cc_state represents a different type of crowd control.
 var cc_state: int = 0
 var effect_array: Array[UnitEffect] = []
@@ -502,6 +504,17 @@ static func get_exp_for_levelup(_level: int) -> int:
 func give_gold(amount: int):
 	current_gold += amount
 
+
+func purchase_item(_item: Item, gold_cost: int):
+	current_gold -= gold_cost
+
+	var new_item = _item.get_copy()
+	item_list.append(new_item)
+	
+	maximum_stats.add(new_item.get_stats())
+	current_stats.add(new_item.get_stats())
+
+	current_stats_changed.emit()
 
 # Movement
 func update_target_location(target_location: Vector3):

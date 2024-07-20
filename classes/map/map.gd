@@ -174,7 +174,7 @@ func client_setup():
 	add_child(hud)
 	
 	var item_shop = player_item_shop.instantiate()
-	
+	item_shop.player_instance = player_rig
 	add_child(item_shop)
 
 
@@ -226,6 +226,27 @@ func client_ready():
 @rpc("any_peer")
 func register_player():
 	var peer_id = multiplayer.get_remote_sender_id()
+
+
+@rpc("any_peer", "call_local")
+func try_purchase_item(item_name):
+	var peer_id = multiplayer.get_remote_sender_id()
+	print("Player " + str(peer_id) + " is trying to purchase item: " + str(item_name))
+
+	var character = get_character(peer_id)
+
+	var item = RegistryManager.items().get_element(item_name) as Item
+	if not item:
+		print("Failed to find item: " + str(item_name))
+		return
+
+	var total_cost = item.calculate_gold_cost()
+	if character.current_gold < total_cost:
+		print("Not enough gold!")
+		return
+
+	print("Purchasing item: " + str(item_name))
+	character.purchase_item(item, total_cost)
 
 
 @rpc("any_peer", "call_local")

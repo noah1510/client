@@ -10,6 +10,9 @@ extends Node
 @onready var hp_bar = $CharacterUI/HealthMana/HealthBar
 @onready var mana_bar = $CharacterUI/HealthMana/ManaBar
 
+@onready var player_display = $CharacterUI/Level
+@onready var player_level_number = $CharacterUI/Level/LevelNumber
+
 var _character
 
 func _ready() -> void:
@@ -45,6 +48,9 @@ func _process(_delta: float) -> void:
 	mana_bar.value = _character.current_stats.mana
 	mana_bar.max_value = _character.maximum_stats.mana
 
+	player_level_number.text = str(_character.level)
+	player_display.tooltip_text = "XP: " + str(_character.level_exp) + "/" + str(_character.required_exp)
+
 
 func _set_icons():
 	while _character == null:
@@ -73,3 +79,6 @@ func _set_icons():
 		mana_bar.show()
 	else:
 		mana_bar.hide()
+
+
+	player_display.mouse_filter = Control.MOUSE_FILTER_STOP

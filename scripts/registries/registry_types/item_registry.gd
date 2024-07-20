@@ -14,6 +14,10 @@ func contains(_item: String) -> bool:
 
 
 func get_element(_item: String):
+	if not contains(_item):
+		print("Item (%s): Item not found in item registry." % _item)
+		return null
+	
 	return _internal_values[_item]
 
 
