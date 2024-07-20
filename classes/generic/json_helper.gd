@@ -65,6 +65,41 @@ static func get_optional_int(dict: Dictionary, key_name: String, fallback_value 
     return int(get_optional_number(dict, key_name, fallback_value))
 
 
+static func get_optional_enum(dict: Dictionary, key_name: String, enum_type: Dictionary, fallback_value) -> int:
+    if not dict.has(key_name):
+        return fallback_value
+
+    var value = dict[key_name]
+    if not (value is int) and not (value is String):
+        print("%s is not an enum but a %s;using the default value %d" % [key_name, get_type_string(value), fallback_value])
+        return fallback_value
+
+    if value is int:
+        if not enum_type.values().has(value):
+            print("%d is not a valid enum value;using the default value %d" % [value, fallback_value])
+            return fallback_value
+        
+        return value
+
+    if not enum_type.has(value):
+        print("%s is not a valid enum value;using the default value %d" % [value, fallback_value])
+        return fallback_value
+
+    return enum_type[value]
+
+
+static func get_optional_bool(dict: Dictionary, key_name: String, fallback_value = false) -> bool:
+    if not dict.has(key_name):
+        return fallback_value
+
+    var value = dict[key_name]
+    if not (value is bool):
+        print("%s is not a boolean but a %s;using the default value %s" % [key_name, get_type_string(value), fallback_value])
+        return fallback_value
+
+    return value
+
+
 static func get_type_string(value: Variant) -> String:
     match typeof(value):
         TYPE_NIL: return "nil"

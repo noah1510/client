@@ -46,6 +46,16 @@ extends Object
 ## The amount of bonus damage the unit deals on a critical strike in percentage (> 0)
 @export var attack_crit_damage: int = 0
 
+## The amount of ability power the unit has.
+## Ability power is used to increase the damage of abilities that scale with ability power.
+@export var ability_power: int = 0
+## The amount of ability haste the unit has.
+## Ability haste is used to reduce the cooldown of abilities.
+## Every 100 points of ability haste allow the unit to cast the ability one more time per stock cooldown.
+## For example, if an ability has a stock cooldown of 10 seconds and the unit has 100 ability haste,
+## the ability will be available every 5 seconds, if the unit has 200 ability haste, the ability will be available every 3.33 seconds.
+@export var ability_haste: int = 0
+
 ## The percentage of post-mitigation damage dealt by the unit that is returned as healing (0-100).
 ## To calculate the actual percentage the omnivamp value is added to the physical, magic and true vamp values depending on the damage type.
 @export var omnivamp: int = 0
@@ -84,6 +94,9 @@ static func from_dict(json_data_object: Dictionary) -> StatCollection:
     stat.attack_crit_chance = JsonHelper.get_optional_int(json_data_object, "attack_crit_chance", 0)
     stat.attack_crit_damage = JsonHelper.get_optional_int(json_data_object, "attack_crit_damage", 0)
 
+    stat.ability_power = JsonHelper.get_optional_int(json_data_object, "ability_power", 0)
+    stat.ability_haste = JsonHelper.get_optional_int(json_data_object, "ability_haste", 0)
+
     stat.omnivamp = JsonHelper.get_optional_int(json_data_object, "omnivamp", 0)
     stat.physical_vamp = JsonHelper.get_optional_int(json_data_object, "physical_vamp", 0)
     stat.magic_vamp = JsonHelper.get_optional_int(json_data_object, "magic_vamp", 0)
@@ -117,6 +130,9 @@ func to_dict() -> Dictionary:
     json_data_object["attack_range"] = attack_range
     json_data_object["attack_crit_chance"] = attack_crit_chance
     json_data_object["attack_crit_damage"] = attack_crit_damage
+
+    json_data_object["ability_power"] = ability_power
+    json_data_object["ability_haste"] = ability_haste
 
     json_data_object["omnivamp"] = omnivamp
     json_data_object["physical_vamp"] = physical_vamp
@@ -155,13 +171,16 @@ func add(other: StatCollection, times: int = 1):
     attack_range += other.attack_range * times
     attack_crit_chance += other.attack_crit_chance * times
     attack_crit_damage += other.attack_crit_damage * times
-    
-    movement_speed += other.movement_speed * times
+
+    ability_power += other.ability_power * times
+    ability_haste += other.ability_haste * times
 
     omnivamp += other.omnivamp * times
     physical_vamp += other.physical_vamp * times
     magic_vamp += other.magic_vamp * times
     true_vamp += other.true_vamp * times
+    
+    movement_speed += other.movement_speed * times
 
 
 func clamp_self(_min: StatCollection, _max: StatCollection):
@@ -187,12 +206,15 @@ func clamp_self(_min: StatCollection, _max: StatCollection):
     attack_crit_chance = new_vals.attack_crit_chance
     attack_crit_damage = new_vals.attack_crit_damage
 
-    movement_speed = new_vals.movement_speed
+    ability_power = new_vals.ability_power
+    ability_haste = new_vals.ability_haste
 
     omnivamp = new_vals.omnivamp
     physical_vamp = new_vals.physical_vamp
     magic_vamp = new_vals.magic_vamp
     true_vamp = new_vals.true_vamp
+
+    movement_speed = new_vals.movement_speed
 
 
 func clamp_below(_max: StatCollection):
@@ -222,12 +244,15 @@ static func clamp(_stat: StatCollection, _min: StatCollection, _max: StatCollect
     stat.attack_crit_chance = clamp(_stat.attack_crit_chance, _min.attack_crit_chance, _max.attack_crit_chance)
     stat.attack_crit_damage = clamp(_stat.attack_crit_damage, _min.attack_crit_damage, _max.attack_crit_damage)
 
-    stat.movement_speed = clamp(_stat.movement_speed, _min.movement_speed, _max.movement_speed)
+    stat.ability_power = clamp(_stat.ability_power, _min.ability_power, _max.ability_power)
+    stat.ability_haste = clamp(_stat.ability_haste, _min.ability_haste, _max.ability_haste)
 
     stat.omnivamp = clamp(_stat.omnivamp, _min.omnivamp, _max.omnivamp)
     stat.physical_vamp = clamp(_stat.physical_vamp, _min.physical_vamp, _max.physical_vamp)
     stat.magic_vamp = clamp(_stat.magic_vamp, _min.magic_vamp, _max.magic_vamp)
     stat.true_vamp = clamp(_stat.true_vamp, _min.true_vamp, _max.true_vamp)
+
+    stat.movement_speed = clamp(_stat.movement_speed, _min.movement_speed, _max.movement_speed)
 
     return stat
 
