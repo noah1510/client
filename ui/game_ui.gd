@@ -25,7 +25,7 @@ func _ready() -> void:
 	call_deferred("_set_icons")
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if Config.is_dedicated_server:
 		return
 
@@ -39,11 +39,11 @@ func _process(delta: float) -> void:
 	kda_display.text = str(_character.kills) + "/" + str(_character.deaths) + "/" + str(_character.assists)
 	cs_display.text = str(_character.minion_kills)
 
-	hp_bar.value = _character.current_stats.health_max
-	hp_bar.max_value = _character.maximum_stats.health_max
+	hp_bar.value = _character.current_stats.health
+	hp_bar.max_value = _character.maximum_stats.health
 
-	mana_bar.value = _character.current_stats.mana_max
-	mana_bar.max_value = _character.maximum_stats.mana_max
+	mana_bar.value = _character.current_stats.mana
+	mana_bar.max_value = _character.maximum_stats.mana
 
 
 func _set_icons():

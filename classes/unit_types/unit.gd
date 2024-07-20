@@ -62,8 +62,10 @@ var _hit_reduction_effects : Array[Callable] = []
 @export var unit_id : String = ""
 
 # Stats:
-var maximum_stats: StatCollection
 var current_stats: StatCollection
+var maximum_stats: StatCollection
+var base_stats: StatCollection
+
 var per_level_stats: StatCollection
 
 var has_mana: bool = false
@@ -122,12 +124,12 @@ const healthbar_scene = preload("res://ui/player_stats/healthbar.tscn")
 
 
 func _init():
-	if maximum_stats == null:
-		maximum_stats = StatCollection.from_dict({
-			"health_max": 640,
+	if base_stats == null:
+		base_stats = StatCollection.from_dict({
+			"health": 640,
 			"health_regen": 35,
 
-			"mana_max": 280,
+			"mana": 280,
 			"mana_regen": 7,
 			
 			"armor": 26,
@@ -140,6 +142,9 @@ func _init():
 			"movement_speed": 100,
 		} as Dictionary)
 	
+	if maximum_stats == null:
+		maximum_stats = base_stats.get_copy()
+
 	if current_stats == null:
 		current_stats = maximum_stats.get_copy()
 
@@ -257,8 +262,8 @@ func _setup_scene_elements():
 	healthbar_node.name = "Healthbar"
 	add_child(healthbar_node)
 	healthbar = get_node("Healthbar")
-	healthbar.max_value = maximum_stats.health_max
-	healthbar.sync(current_stats.health_max)
+	healthbar.max_value = maximum_stats.health
+	healthbar.sync(current_stats.health)
 
 	# set up the attack range visualizer
 	var attack_range_mesh = TorusMesh.new()
@@ -288,9 +293,9 @@ func _setup_scene_elements():
 		if not is_alive: return
 
 		# first we regen the mana
-		current_stats.mana_max += current_stats.mana_regen
-		if current_stats.mana_max > maximum_stats.mana_max:
-			current_stats.mana_max = maximum_stats.mana_max
+		current_stats.mana += current_stats.mana_regen
+		if current_stats.mana > maximum_stats.mana:
+			current_stats.mana = maximum_stats.mana
 		
 		# then we emit the healed signal with the amount of health regen
 		# This is used to trigger extra healing effects.
@@ -356,14 +361,14 @@ func _setup_default_signals():
 	healed.connect(func (_caster: Unit, target: Unit, amount: float):
 		if target != self: return
 
-		current_stats.health_max += int(amount)
+		current_stats.health += int(amount)
 
-		if current_stats.health_max >= maximum_stats.health_max: 
+		if current_stats.health >= maximum_stats.health: 
 			if overheal:
-				var extra_health = current_stats.health_max - maximum_stats.health_max
+				var extra_health = current_stats.health - maximum_stats.health
 				current_shielding = clamp(current_shielding + extra_health, 0, max_overheal)
 			
-			current_stats.health_max = maximum_stats.health_max
+			current_stats.health = maximum_stats.health
 		
 		current_stats_changed.emit()
 	)
@@ -395,6 +400,7 @@ func spawn_projectile(_args):
 
 # Stats related things
 func level_up(times: int = 1):
+	base_stats.add(per_level_stats, times)
 	maximum_stats.add(per_level_stats, times)
 	current_stats.add(per_level_stats, times)
 
@@ -533,12 +539,12 @@ func take_damage(caster: Unit, is_crit: bool, damage_type: DamageType, damage_am
 	# If the damage that need to be dealt is more that 0, we need to update the health
 	# and notify the caster that the damage was dealt.
 	if actual_damage > 0:
-		current_stats.health_max -= actual_damage
+		current_stats.health -= actual_damage
 		caster.actual_damage_dealt.emit(caster, self, is_crit, damage_type, actual_damage)
 	
 	# If the health is 0 or less, the unit dies and we register the caster as the murderer.
-	if current_stats.health_max <= 0:
-		current_stats.health_max = 0
+	if current_stats.health <= 0:
+		current_stats.health = 0
 		die(caster)
 	
 	# This simply updates all UI elements with the latest stats
@@ -566,8 +572,8 @@ func die(murderer = null):
 
 # UI
 func _update_healthbar(node: ProgressBar):
-	node.value = current_stats.health_max
-	node.max_value = maximum_stats.health_max
+	node.value = current_stats.health
+	node.max_value = maximum_stats.health
 
 
 func move_on_path(delta: float) -> bool:

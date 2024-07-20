@@ -285,13 +285,13 @@ func spawn_local_effect(ability_name, ability_type, ability_pos, player_pos, pla
 	
 
 @rpc("any_peer", "call_local")
-func respawn(character: CharacterBody3D):
+func respawn(character: Unit):
 	var spawner = player_spawns[str(character.team)]
 	
 	character.server_position = spawner.get_spawn_position(character.index)
 	character.position = character.server_position
 
-	character.set_health(character.get_health_max())
+	character.current_stats = character.maximum_stats
 	character.is_dead = false
 	character.show()
 	character.rpc_id(character.pid, "respawn")

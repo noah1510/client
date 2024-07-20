@@ -5,12 +5,12 @@ extends Object
 
 
 ## The actual health value of the unit.
-@export var health_max: int = 0
+@export var health: int = 0
 ## The amount of health the unit regenerates per 5 seconds.
 @export var health_regen: int = 0
 
 ## The actual mana value of the unit.
-@export var mana_max: int = 0
+@export var mana: int = 0
 ## The amount of mana the unit regenerates per 5 seconds.
 @export var mana_regen: int = 0
 
@@ -63,10 +63,10 @@ extends Object
 static func from_dict(json_data_object: Dictionary) -> StatCollection:
     var stat = StatCollection.new()
     
-    stat.health_max = JsonHelper.get_optional_int(json_data_object, "health_max", 0)
+    stat.health = JsonHelper.get_optional_int(json_data_object, "health", 0)
     stat.health_regen = JsonHelper.get_optional_int(json_data_object, "health_regen", 0)
 
-    stat.mana_max = JsonHelper.get_optional_int(json_data_object, "mana_max", 0)
+    stat.mana = JsonHelper.get_optional_int(json_data_object, "mana", 0)
     stat.mana_regen = JsonHelper.get_optional_int(json_data_object, "mana_regen", 0)
 
     stat.armor = JsonHelper.get_optional_int(json_data_object, "armor", 0)
@@ -97,10 +97,10 @@ static func from_dict(json_data_object: Dictionary) -> StatCollection:
 func to_dict() -> Dictionary:
     var json_data_object = {}
     
-    json_data_object["health_max"] = health_max
+    json_data_object["health"] = health
     json_data_object["health_regen"] = health_regen
 
-    json_data_object["mana_max"] = mana_max
+    json_data_object["mana"] = mana
     json_data_object["mana_regen"] = mana_regen
 
     json_data_object["armor"] = armor
@@ -135,10 +135,10 @@ func get_copy() -> StatCollection:
 
 
 func add(other: StatCollection, times: int = 1):
-    health_max += other.health_max * times
+    health += other.health * times
     health_regen += other.health_regen * times
 
-    mana_max += other.mana_max * times
+    mana += other.mana * times
     mana_regen += other.mana_regen * times
 
     armor += other.armor * times
@@ -166,10 +166,10 @@ func add(other: StatCollection, times: int = 1):
 
 func clamp_self(_min: StatCollection, _max: StatCollection):
     var new_vals : StatCollection = clamp(self, _min, _max)
-    health_max = new_vals.health_max
+    health = new_vals.health
     health_regen = new_vals.health_regen
 
-    mana_max = new_vals.mana_max
+    mana = new_vals.mana
     mana_regen = new_vals.mana_regen
 
     armor = new_vals.armor
@@ -201,10 +201,10 @@ func clamp_below(_max: StatCollection):
 
 static func clamp(_stat: StatCollection, _min: StatCollection, _max: StatCollection) -> StatCollection:
     var stat := StatCollection.new()
-    stat.health_max = clamp(_stat.health_max, _min.health_max, _max.health_max)
+    stat.health = clamp(_stat.health, _min.health, _max.health)
     stat.health_regen = clamp(_stat.health_regen, _min.health_regen, _max.health_regen)
 
-    stat.mana_max = clamp(_stat.mana_max, _min.mana_max, _max.mana_max)
+    stat.mana = clamp(_stat.mana, _min.mana, _max.mana)
     stat.mana_regen = clamp(_stat.mana_regen, _min.mana_regen, _max.mana_regen)
 
     stat.armor = clamp(_stat.armor, _min.armor, _max.armor)

@@ -185,4 +185,5 @@ func _multiplayer_spawn_unit(data: Dictionary):
 	_unit.died.connect(
 		func(): _on_unit_death(_unit)
 	)
+	_unit.map = map
 	return _unit
