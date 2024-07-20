@@ -17,6 +17,15 @@ enum DamageType {
 	MAGICAL = 2,
 }
 
+## A dictionary that maps strings to the DamageType enum.
+## This can be used in combination with JsonHelper.get_optional_enum
+## to parse damage types from JSON.
+const ParseDamageType : Dictionary = {
+	"true": DamageType.TRUE,
+	"physical": DamageType.PHYSICAL,
+	"magical": DamageType.MAGICAL,
+}
+
 # Signals
 
 ## Emitted when the unit dies.
@@ -392,6 +401,7 @@ func spawn_projectile(_args):
 	_projectile.model_scale = projectile_config["model_scale"]
 	_projectile.model_rotation = projectile_config["model_rotation"]
 	_projectile.speed = projectile_config["speed"]
+	_projectile.damage_type = projectile_config["damage_type"]
 
 	_projectile.is_crit = should_crit()
 

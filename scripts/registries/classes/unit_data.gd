@@ -10,6 +10,12 @@ enum AggroType {
 	AGGRESSIVE,
 }
 
+const PareAggroType = {
+	"passive": AggroType.PASSIVE,
+	"neutral": AggroType.NEUTRAL,
+	"aggressive": AggroType.AGGRESSIVE,
+}
+
 var stats = StatCollection.new()
 var stat_growth = StatCollection.new()
 var windup_fraction: float = 0.1
@@ -47,8 +53,6 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 		print("Wrong JSON type.")
 		return false
 
-	var _is_character: bool = _json["type"] == "character"
-
 	if not _json.has("data"):
 		print("Unit: No data object provided.")
 		return false
@@ -68,6 +72,8 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 	if _registry.contains(_unit_id_str):
 		print("Unit (%s): Unit already exists in unit registry." % _unit_id_str)
 		return false
+
+	var _is_character := JsonHelper.get_optional_bool(_json_data, "is_character", false)
 
 	var _unit_model_id = null
 	if _json_data.has("model"):
@@ -161,25 +167,18 @@ static func from_dict(_json: Dictionary, _registry: RegistryBase):
 				"spawn_offset",
 				Vector3(0.0, 0.0, 0.0)
 			)
+			_projectile_config["damage_type"] = JsonHelper.get_optional_enum(
+				raw_projectile_config,
+				"damage_type",
+				Unit.ParseDamageType,
+				Unit.DamageType.PHYSICAL
+			)
 
 			new_unit.projectile_config = _projectile_config
 
 	new_unit.windup_fraction = JsonHelper.get_optional_number(_json_data, "windup_fraction", 0.1)
 
-	if _json_data.has("aggro_type"):
-		var raw_aggro_type = _json_data["aggro_type"]
-
-		match str(raw_aggro_type):
-			"passive":
-				new_unit.aggro_type = AggroType.PASSIVE
-			"neutral":
-				new_unit.aggro_type = AggroType.NEUTRAL
-			"aggressive":
-				new_unit.aggro_type = AggroType.AGGRESSIVE
-			_:
-				print("Unit (%s): Invalid aggro_type: %s" % [_unit_id_str, str(raw_aggro_type)])
-				new_unit.aggro_type = AggroType.PASSIVE
-
+	new_unit.aggro_type = JsonHelper.get_optional_enum(_json_data, "aggro_type", PareAggroType, AggroType.PASSIVE)
 	new_unit.aggro_distance = JsonHelper.get_optional_number(_json_data, "aggro_distance", 1.0)
 	new_unit.deaggro_distance = JsonHelper.get_optional_number(_json_data, "deaggro_distance", 3.0)
 
@@ -258,9 +257,9 @@ func spawn(spawn_args: Dictionary):
 		_unit.index = spawn_args["index"]
 
 	if spawn_args.has("level"):
-		var level_incrrement = int(spawn_args["level"]) - _unit.level
-		if level_incrrement > 0:
-			_unit.level_up(level_incrrement)
+		var level_increment = int(spawn_args["level"]) - _unit.level
+		if level_increment > 0:
+			_unit.level_up(level_increment)
 
 	if spawn_exp > 0:
 		_unit.give_exp(spawn_exp)
@@ -268,7 +267,11 @@ func spawn(spawn_args: Dictionary):
 	if spawn_gold > 0:
 		_unit.give_gold(spawn_gold)
 
-	if is_character:
+	# check if the unit should be spawned as a character
+	# if no value is provided use the one in the unit data
+	var spawn_character = JsonHelper.get_optional_bool(spawn_args, "is_character", is_character)
+
+	if spawn_character:
 		# set the character's script and set all the values
 		#character.set_script("res://classes/character.gd")
 

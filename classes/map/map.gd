@@ -92,9 +92,13 @@ func _spawn_character(args):
 	print("loading character:" + spawn_args["character"])
 	
 	
-	var char_data = RegistryManager.characters().get_element(spawn_args["character"])
+	var char_data = RegistryManager.units().get_element(spawn_args["character"]) as UnitData
 	if not char_data:
 		print("Error character data could not be found in registry!")
+		return null
+
+	if not char_data.is_character:
+		print("Error character data is not a character!")
 		return null
 
 	var new_char = char_data.spawn(spawn_args)

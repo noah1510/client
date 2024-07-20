@@ -3,6 +3,7 @@ class_name Projectile
 
 var is_crit : bool = false
 var speed : float = 80.0
+var damage_type : Unit.DamageType = Unit.DamageType.PHYSICAL
 
 var target: Node = null
 var caster: Node = null

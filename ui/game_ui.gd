@@ -57,7 +57,7 @@ func _set_icons():
 		
 		print("Character not found")
 
-	var player_icon_id = RegistryManager.characters().get_element(_character.unit_id).get_icon_id()
+	var player_icon_id = RegistryManager.units().get_element(_character.unit_id).get_icon_id()
 	if player_icon_id == null:
 		print("Icon not found")
 		return
