@@ -13,6 +13,8 @@ def main(args):
     if args["update_submodules"]:
         update_submodules()
 
+    subprocess.run([sys.executable, "default_assets/manifests.py"])
+
     # handle the extension setup mode
     if args["extension_setup"] != "SKIP":
         download_success = False
