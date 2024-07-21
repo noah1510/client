@@ -2,7 +2,7 @@ extends Node
 
 @export var _map : Node
 
-@onready var player_icon = $CharacterUI/Portrait
+@onready var player_icon = $CharacterUI/PortraitBorder/Portrait
 @onready var money_count = $GameStats/Money
 @onready var kda_display = $GameStats/KDA
 @onready var cs_display = $GameStats/CS

@@ -78,7 +78,12 @@ The user prefix is in the following location:
 * Windows: `%APPDATA%\Godot\app_userdata\OpenChamp`
 * macOS: `~/Library/Application Support/Godot/app_userdata/OpenChamp`
 * Linux: `~/.local/share/godot/app_userdata/OpenChamp`
- 
+
+## Reimporting the assets
+
+To reimport the assets close godot, run `find . -name \*.import -delete` in the project dir (linux, mac, msys2, wsl) and then open godot again.
+This makes sure the assets are in the default state that will also be the one that is used for game exports.
+
 ## Contributing
 
 Contributions are always welcome!

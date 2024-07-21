@@ -48,6 +48,13 @@ Ground="Map Floor"
 
 timers/tooltip_delay_sec=0.25
 
+[importer_defaults]
+
+texture={
+"compress/mode": 3,
+"mipmaps/generate": true
+}
+
 [input]
 
 camera_left={
@@ -182,5 +189,6 @@ common/physics_ticks_per_second=30
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=2
 textures/vram_compression/import_s3tc_bptc=true
 textures/vram_compression/import_etc2_astc=true
