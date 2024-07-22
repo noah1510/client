@@ -100,6 +100,35 @@ static func get_optional_bool(dict: Dictionary, key_name: String, fallback_value
     return value
 
 
+static func dict_deep_copy(dict: Dictionary) -> Dictionary:
+    var new_dict = {}
+
+    for key in dict.keys():
+        var value = dict[key]
+        if value is Dictionary:
+            new_dict[key] = dict_deep_copy(value)
+        elif value is Array:
+            new_dict[key] = array_deep_copy(value)
+        else:
+            new_dict[key] = value
+
+    return new_dict
+
+
+static func array_deep_copy(array: Array) -> Array:
+    var new_array = []
+
+    for value in array:
+        if value is Dictionary:
+            new_array.append(dict_deep_copy(value))
+        elif value is Array:
+            new_array.append(array_deep_copy(value))
+        else:
+            new_array.append(value)
+
+    return new_array
+
+
 static func get_type_string(value: Variant) -> String:
     match typeof(value):
         TYPE_NIL: return "nil"
