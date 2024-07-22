@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3]
 
-[ext_resource type="Script" path="res://classes/unit_types/unit.gd" id="1_qclsc"]
+[ext_resource type="Script" path="res://scripts/unit_types/unit.gd" id="1_qclsc"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ig7uv"]
 

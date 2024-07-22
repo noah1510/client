@@ -311,15 +311,19 @@ func _setup_scene_elements():
 		if not is_alive: return
 
 		# first we regen the mana
-		current_stats.mana += current_stats.mana_regen
-		if current_stats.mana > maximum_stats.mana:
-			current_stats.mana = maximum_stats.mana
+		if current_stats.mana_regen > 0:
+			current_stats.mana += current_stats.mana_regen
+			if current_stats.mana > maximum_stats.mana:
+				current_stats.mana = maximum_stats.mana
 		
-		# then we emit the healed signal with the amount of health regen
-		# This is used to trigger extra healing effects.
-		# The healed signal will also trigger the current_stats_changed signal
-		# which will update the UI elements.
-		healed.emit(self, self, current_stats.health_regen)
+		if current_stats.health_regen:
+			# then we emit the healed signal with the amount of health regen
+			# This is used to trigger extra healing effects.
+			# The healed signal will also trigger the current_stats_changed signal
+			# which will update the UI elements.
+			healed.emit(self, self, current_stats.health_regen)
+		else:
+			current_stats_changed.emit()
 	)
 	add_child(passive_heal_timer)
 
@@ -366,13 +370,16 @@ func _setup_default_signals():
 	actual_damage_dealt.connect(func (caster: Unit, _target: Unit, _is_crit: bool, damage_type: DamageType, damage: int):
 		if caster != self: return
 
-		var total_vamp = current_stats.omnivamp
+		var total_vamp : int = current_stats.omnivamp
 		if damage_type == DamageType.PHYSICAL: total_vamp += current_stats.physical_vamp
 		if damage_type == DamageType.MAGICAL: total_vamp += current_stats.magic_vamp
 		if damage_type == DamageType.TRUE: total_vamp += current_stats.true_vamp
 
-		var heal_amount = damage * total_vamp * 0.01
-		self.healed.emit(self, self, heal_amount)
+		total_vamp = clampi(total_vamp, 0, 100)
+
+		if total_vamp > 0:
+			var heal_amount = int(damage * total_vamp * 0.01)
+			self.healed.emit(self, self, heal_amount)
 	)
 
 	# Handle healing effects being applied
@@ -384,7 +391,7 @@ func _setup_default_signals():
 		if current_stats.health >= maximum_stats.health: 
 			if overheal:
 				var extra_health = current_stats.health - maximum_stats.health
-				current_shielding = clamp(current_shielding + extra_health, 0, max_overheal)
+				current_shielding = clampi(current_shielding + extra_health, 0, max_overheal)
 			
 			current_stats.health = maximum_stats.health
 		
