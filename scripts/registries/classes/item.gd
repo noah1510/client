@@ -10,6 +10,8 @@ var component_tree : Dictionary = {}
 
 var stats = StatCollection.new()
 
+var effects : Array[ActionEffect] = []
+
 var id: Identifier
 var texture_id: Identifier
 
@@ -26,6 +28,7 @@ func get_copy() -> Item:
 	new_item.item_tier = item_tier
 	new_item.total_gold_cost = total_gold_cost
 	new_item.is_active = is_active
+	new_item.effects = effects
 
 	# for now don't copy the component tree
 	# It is very computationally expensive to copy the component tree and not used yet
@@ -55,17 +58,33 @@ func get_desctiption_strings() -> Dictionary:
 
 	item_descriptions["stats"] = item_stat_string
 
+	var effect_string = ""
+	for effect in effects:
+		effect_string += effect.get_description_string() + "\n"
+	
+	item_descriptions["effects"] = effect_string
+
 	return item_descriptions
 
 
 func get_tooltip_string() -> String:
 	var item_desctiptions = get_desctiption_strings()
-	return "%s\n%s\n\n%s\n%s" % [
-		item_desctiptions["name"],
-		item_desctiptions["lore"],
-		item_desctiptions["stats"],
-		item_desctiptions["cost"]
-	]
+
+	if effects.is_empty():
+		return "%s\n%s\n\n%s\n%s" % [
+			item_desctiptions["name"],
+			item_desctiptions["lore"],
+			item_desctiptions["stats"],
+			item_desctiptions["cost"]
+		]
+	else:
+		return "%s\n%s\n\n%s\n%s\n%s" % [
+			item_desctiptions["name"],
+			item_desctiptions["lore"],
+			item_desctiptions["stats"],
+			item_desctiptions["effects"],
+			item_desctiptions["cost"]
+		]
 
 
 func get_texture_resource() -> Identifier:

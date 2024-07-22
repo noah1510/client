@@ -32,9 +32,10 @@ func _ready() -> void:
 		
 		for _item in all_in_tier:
 			var texture_resource = _item.get_texture_resource()
-			var item_texture = load(AssetIndexer.get_asset_path(texture_resource))
+			var raw_texture_path = AssetIndexer.get_asset_path(texture_resource)
+			var item_texture = load(raw_texture_path)
 			if item_texture == null:
-				print("Item (%s): Texture (%s) not found." % [_item.id.to_string(), texture_resource.to_string()])
+				print("Item (%s): Texture (%s) not found. Tried loading (%s)" % [_item.id.to_string(), texture_resource.to_string(), raw_texture_path])
 				continue
 
 			var item_image = TextureRect.new()

@@ -119,34 +119,27 @@ static func from_dict(_dict: Dictionary) -> ActionEffect:
 		print("Could not create action effect from dictionary. Dictionary has no base_id key.")
 		return null
 
-	var _class_name = _dict["base_id"]
-	if not ClassDB.class_exists(_class_name):
-		print("Could not create action effect from dictionary. Class does not exist: " + _class_name)
-		return null
+	var _instance : ActionEffect = null
+	match _dict["base_id"]:
+		"ActionEffect":
+			print("Could not create action effect from dictionary. Class is the base class: " + _dict["base_id"])
+			return null
+		"OnHitDamageEffect":
+			_instance = OnHitDamageEffect.new()
+		
+		_:
+			print("Invalid action effect class name: " + _dict["base_id"])
+			return null
 
-	if _class_name == "ActionEffect":
-		print("Could not create action effect from dictionary. Class is the base class: " + _class_name)
-		return null
-
-	if not ClassDB.is_parent_class(_class_name, "ActionEffect"):
-		print("Could not create action effect from dictionary. Class is not a subclass of ActionEffect: " + _class_name)
-		return null
-	
-	var _instance = ClassDB.instantiate(_class_name) as ActionEffect
-	if _instance == null:
-		print("Could not create action effect subclass instance: " + _class_name)
-		return null
-
-	if not _dict.has("display_id") or not _dict["display_id"].is_string():
+	if not _dict.has("display_id"):
 		print("Could not create action effect from dictionary. Dictionary has no display_id key.")
 		return null
-	_instance._display_id = Identifier.from_string(_dict["display_id"])
 
-	if _dict.has("is_exclusive") and _dict["is_exclusive"].is_bool():
-		_instance._is_exclusive = _dict["is_exclusive"]
+	_instance._display_id = Identifier.from_string(str(_dict["display_id"]))
+	_instance._is_exclusive = JsonHelper.get_optional_bool(_dict, "is_exclusive", false)
 
-	if _instance._from_dict(_dict) == false:
-		print("Could not create action effect from dictionary. Could not load data: " + _class_name)
+	if not _instance._from_dict(_dict):
+		print("Could not create action effect from dictionary. Could not load data.")
 		return null
 	
 	return _instance
@@ -192,132 +185,15 @@ func is_exclusive() -> bool:
 	return _is_exclusive
 
 
-# All the virtual functions that may be overridden by subclasses
+## Attach the action effect to a unit.
+## This should be called when the action effect is added to a unit.
+## It will connect to all the signals needed to make the action effect work.
+func connect_to_unit(_unit: Unit) -> void:
+	pass
 
 
-## Activate the action effect.
-## [br][br]
-## Depending on the type of action effect this might either
-## change the activation state or do nothing
-func on_activation(_caster: Unit) -> ActivationState:
-	return _activation_state
-
-
-## Deactivate the action effect.
-## [br][br]
-## Depending on the type of action effect this might either
-## change the activation state or do nothing.
-## If the action effect is in the TARGETING state it should
-## be canceled and the activation state should be set to READY or COOLDOWN.
-func on_deactivation(_caster: Unit) -> ActivationState:
-	return _activation_state
-
-
-## Upgrade the action effect.
-## [br][br]
-## This function should be called when the action effect is upgraded.
-## This will most likely only be used by player units, when they spend level up points.
-func on_upgrade(_caster: Unit) -> ActivationState:
-	return _activation_state
-
-
-## Handle the auto attack cast event.
-## [br][br]
-## This function should be called when a unit casts an auto attack.
-## This may be used to apply effects that change the projectile spawn behavior.
-## One example would be a passive effect that spawns a second projectile on auto attack.
-func on_auto_attack_cast (_caster: Unit, _target: Unit) -> ActivationState:
-	return _activation_state
-
-
-## Handle the auto attack hit event.
-## [br][br]
-## This function should be called when a unit's auto attack projectile hits a target.
-## This is the main way to apply effects that are triggered by auto attacks.
-## One example would be extra damage on crit.
-func on_auto_attack_hit (_caster: Unit, _target: Unit, _crit: bool) -> ActivationState:
-	return _activation_state
-
-
-## Handle the auto attack miss event.
-## [br][br]
-## This function should be called when a unit's auto attack projectile misses a target.
-## This can be used to apply effects that are triggered by a miss.
-## One example would be a passive effect that applies a debuff on miss
-func on_auto_attack_miss (_caster: Unit, _target: Unit) -> ActivationState:
-	return _activation_state
-
-
-## Handle the auto attack block event.
-## [br][br]
-## This function should be called when a unit's auto attack projectile is blocked by a unit.
-## This can be used to apply effects that are triggered by a block.
-## One example would be a passive effect that applies a debuff on block with a chance.
-## Another would be applying healing when blocking damage an ally would have taken.
-## Note: This should be raised by the blocker, not the caster.
-func on_auto_attack_block(_blocker: Unit, _caster: Unit, _target: Unit, _missed: bool = true) -> ActivationState:
-	return _activation_state
-
-
-## Handle the auto attack received event.
-## [br][br]
-## This function should be called when a unit receives an auto attack.
-## This can be used to apply effects that are triggered by receiving an auto attack.
-## One example would be a passive effect that applies a buff on hit with a chance.
-## Another example would be to reduce crit damage taken.
-func on_auto_attack_received(_target: Unit, _caster: Unit, _crit: bool) -> ActivationState:
-	return _activation_state
-
-
-## Handle the ability cast event.
-## [br][br]
-## This function should be called when a unit casts an ability.
-## This may be used to apply effects that change the ability cast behavior.
-## In a way this is similar to on_auto_attack_cast but for abilities.
-## It allows to spawn extra projectiles or apply effects before the ability intself is cast.
-## [br][br]
-## Note that for untargted abilities the targets array will be empty or null.
-## For targeted abilities the targets array will contain the target unit(s).
-func on_ability_cast (_caster: Unit, _targets: Array[Unit], _ability: ActionEffect) -> ActivationState:
-	return _activation_state
-
-
-## Handle the ability hit event.
-## [br][br]
-## This function should be called when an ability hits its targets.
-## This is the main way to apply effects that are triggered by abilities.
-## One example would be a passive effect that applies a debuff on hit with a chance.
-## Another example would be simply extra damage on hit.
-## [br][br]
-## Note that the ability type is passed to allow for different effects based on the ability type.
-## Also the targets are passed to allow for effects that are triggered by hitting multiple targets.
-func on_ability_hit (_caster: Unit, _targets: Array[Unit], _ability: ActionEffect) -> ActivationState:
-	return _activation_state
-
-
-## Handle the ability miss event.
-## [br][br]
-## This function should be called when an ability misses its targets.
-## This can be used to apply effects that are triggered by a miss.
-func on_ability_miss (_caster: Unit, _targets: Array[Unit], _ability: ActionEffect) -> ActivationState:
-	return _activation_state
-
-
-## Handle the ability block event.
-## [br][br]
-## This function should be called when an ability is blocked by a unit.
-## This can be used to apply effects that are triggered by a block.
-func on_ability_block(_blocker: Unit, _caster: Unit, _targets: Array[Unit], _ability: ActionEffect, _missed: bool = true) -> ActivationState:
-	return _activation_state
-
-
-## Handle being hit by an ability.
-## [br][br]
-## This function should be called when a unit is hit by an ability.
-## This can be used to apply effects that are triggered by being hit by an ability.
-## One example would be a passive effect that reduces damage taken from abilities.
-func on_ability_received(_target: Unit, _caster: Unit, _ability: ActionEffect) -> ActivationState:
-	return _activation_state
+func get_description_string() -> String:
+	return tr("ACTION_EFFECT:%s" % _display_id.to_string())
 
 
 ## Actually load the action effect from a dictionary.

@@ -114,11 +114,25 @@ func load_from_json(_json: Dictionary) -> bool:
 
 	var stats = StatCollection.from_dict(raw_stats)
 
+	var loaded_effects : Array[ActionEffect] = []
 	if _json_data.has("effects"):
-		print("Item (%s): Effects not implemented." % item_id_str)
-		# TODO: Implement item effects
+		var raw_effects = _json_data["effects"]
+
+		if not (raw_effects is Array):
+			print("Item (%s): Effects must be an array." % item_id_str)
+			return false
+		
+		for raw_effect in raw_effects:
+			var effect = ActionEffect.from_dict(raw_effect)
+			if effect == null:
+				print("Item (%s): Could not load effect." % item_id_str)
+				return false
+
+			loaded_effects.append(effect)
 
 	var new_item = Item.new(item_id, texture_id, gold_cost, components, stats)
+	new_item.effects = loaded_effects
+
 	_internal_values[item_id_str] = new_item
 
 	return true

@@ -129,6 +129,8 @@ var projectile_spawner : MultiplayerSpawner
 
 var attack_range_visualizer : MeshInstance3D
 
+var action_effects : Node
+
 # UI
 var healthbar : ProgressBar
 
@@ -268,6 +270,12 @@ func _setup_scene_elements():
 	projectile_spawner_node.spawn_function = spawn_projectile
 	add_child(projectile_spawner_node)
 	projectile_spawner = get_node("ProjectileSpawner")
+
+	# set up the action effects
+	var action_effects_node = Node.new()
+	action_effects_node.name = "ActionEffects"
+	add_child(action_effects_node)
+	action_effects = get_node("ActionEffects")
 
 	# set up the navitation agent
 	var _nav_agent = NavigationAgent3D.new()
@@ -521,6 +529,10 @@ func give_gold(amount: int):
 
 func purchase_item(_item: Item, gold_cost: int, new_inventory: Array[Item]):
 	item_list = new_inventory
+
+	for effect in _item.effects:
+		effect.connect_to_unit(self)
+		action_effects.add_child(effect)
 
 	item_slots_active.clear()
 	item_slots_passive.clear()
