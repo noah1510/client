@@ -3,6 +3,7 @@ class_name Item extends Object
 var gold_cost: int = 0
 var components: Array[String] = []
 var item_tier: int = -1
+var is_active: bool = false
 
 var total_gold_cost : int = 0
 var component_tree : Dictionary = {}
@@ -24,6 +25,7 @@ func get_copy() -> Item:
 
 	new_item.item_tier = item_tier
 	new_item.total_gold_cost = total_gold_cost
+	new_item.is_active = is_active
 
 	# for now don't copy the component tree
 	# It is very computationally expensive to copy the component tree and not used yet
@@ -54,6 +56,16 @@ func get_desctiption_strings() -> Dictionary:
 	item_descriptions["stats"] = item_stat_string
 
 	return item_descriptions
+
+
+func get_tooltip_string() -> String:
+	var item_desctiptions = get_desctiption_strings()
+	return "%s\n%s\n\n%s\n%s" % [
+		item_desctiptions["name"],
+		item_desctiptions["lore"],
+		item_desctiptions["stats"],
+		item_desctiptions["cost"]
+	]
 
 
 func get_texture_resource() -> Identifier:

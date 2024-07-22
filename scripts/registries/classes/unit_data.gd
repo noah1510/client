@@ -253,8 +253,9 @@ func spawn(spawn_args: Dictionary):
 	_unit.exp_per_second = exp_per_second
 	_unit.gold_per_second = gold_per_second
 
-	if spawn_args.has("index"):
-		_unit.index = spawn_args["index"]
+	_unit.passive_item_slots = JsonHelper.get_optional_int(spawn_args, "passive_item_slots", 0)
+
+	_unit.index = JsonHelper.get_optional_int(spawn_args, "index", 0)
 
 	if spawn_args.has("level"):
 		var level_increment = int(spawn_args["level"]) - _unit.level

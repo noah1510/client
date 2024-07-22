@@ -22,6 +22,8 @@ var end_conditions = []
 
 var last_player_index = 0
 
+var player_passive_item_slots = 2
+
 const player_desktop_hud = preload("res://ui/game_ui.tscn")
 const player_desktop_settings = preload("res://ui/settings_menu/settings_menu.tscn")
 const player_item_shop = preload("res://ui/shops/item_shop.tscn")
@@ -51,6 +53,7 @@ func _ready():
 		spawn_args["index"] = last_player_index
 		spawn_args["team"] = player["team"]
 		spawn_args["position"] = player_spawns[str(player["team"])].position
+		spawn_args["passive_item_slots"] = player_passive_item_slots
 
 		last_player_index += 1
 		
@@ -110,6 +113,8 @@ func _spawn_character(args):
 
 
 func _load_config():
+	player_passive_item_slots = int(map_configuration["player_passive_item_slots"])
+
 	# unlike the other nodes the map features node is not created in the _setup_nodes function
 	# this is needed because all features are added to this node and we need to load the map configuration
 	# before we can set up most of the nodes
@@ -246,8 +251,26 @@ func try_purchase_item(item_name):
 		print("Missing %d gold to purchase item: %s" % [purchase_cost - character.current_gold, item_name])
 		return
 
-	print("Purchasing item: " + str(item_name))
 	var new_inventory = tried_purchase["owned_items"] as Array[Item]
+	new_inventory.append(item)
+
+	var active_items = 0
+	for _item in new_inventory:
+		if _item.is_active:
+			active_items += 1
+
+	if active_items > character.active_item_slots:
+		var display_strings = item.get_desctiption_strings()
+		print("Not enough active slots to but %s" % display_strings["name"])
+		return
+
+	var new_item_count = new_inventory.size() + 1
+	if new_item_count > character.passive_item_slots + character.active_item_slots:
+		var display_strings = item.get_desctiption_strings()
+		print(tr("Not enough inventory slots to buy %s") % display_strings["name"])
+		return
+
+	print("Purchasing item: " + str(item_name))
 	character.purchase_item(item, purchase_cost, new_inventory)
 
 

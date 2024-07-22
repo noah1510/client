@@ -105,7 +105,14 @@ var assists : int = 0
 
 var minion_kills: int = 0
 
+var passive_item_slots : int = 2
+var active_item_slots : int = 4
+
 var item_list : Array[Item] = []
+var item_slots_active : Array[Item] = []
+var item_slots_passive : Array[Item] = []
+
+var items_changed : bool = false
 
 # Each bit of cc_state represents a different type of crowd control.
 var cc_state: int = 0
@@ -507,14 +514,26 @@ func give_gold(amount: int):
 
 func purchase_item(_item: Item, gold_cost: int, new_inventory: Array[Item]):
 	item_list = new_inventory
+
+	item_slots_active.clear()
+	item_slots_passive.clear()
+
+	for item in item_list:
+		if item.is_active:
+			item_slots_active.append(item)
+		else:
+			if item_slots_passive.size() < passive_item_slots:
+				item_slots_passive.append(item)
+			else:
+				item_slots_active.append(item)
+	
 	current_gold -= gold_cost
 	
-	var new_item = _item.get_copy()
-	new_inventory.append(new_item)
-	maximum_stats.add(new_item.get_stats())
-	current_stats.add(new_item.get_stats())
+	maximum_stats.add(_item.get_stats())
+	current_stats.add(_item.get_stats())
 
 	current_stats_changed.emit()
+	items_changed = true
 
 # Movement
 func update_target_location(target_location: Vector3):

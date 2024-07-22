@@ -368,6 +368,26 @@ func try_purchasing_item(item_name: String) -> void:
 		print(tr("ITEM:NOT_ENOUGH_GOLD") % [(total_cost - character.current_gold), display_strings["name"]])
 		return
 
+	var new_inventory = purchase_result["owned_items"] as Array[Item]
+	new_inventory.append(item)
+
+	var active_items = 0
+	for _item in new_inventory:
+		if _item.is_active:
+			active_items += 1
+
+	if active_items > character.active_item_slots:
+		var display_strings = item.get_desctiption_strings()
+		print(tr("ITEM:NOT_ENOUGH_ACTIVE_SLOTS") % display_strings["name"])
+		return
+
+	var new_item_count = new_inventory.size() + 1
+	if new_item_count > character.passive_item_slots + character.active_item_slots:
+		var display_strings = item.get_desctiption_strings()
+		print(tr("ITEM:NOT_ENOUGH_SLOTS") % display_strings["name"])
+		return
+	
+
 	# If it is possible to actually purchase the item, request it from the server
 	server_listener.rpc_id(get_multiplayer_authority(), "try_purchase_item", item_name)
 
