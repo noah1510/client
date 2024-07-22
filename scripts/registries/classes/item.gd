@@ -4,6 +4,9 @@ var gold_cost: int = 0
 var components: Array[String] = []
 var item_tier: int = -1
 
+var total_gold_cost : int = 0
+var component_tree : Dictionary = {}
+
 var stats = StatCollection.new()
 
 var id: Identifier
@@ -11,8 +14,21 @@ var texture_id: Identifier
 
 
 func get_copy() -> Item:
-	var new_item = Item.new(id, texture_id, gold_cost, components, stats)
+	var new_item = Item.new(
+		id,
+		texture_id,
+		gold_cost,
+		components,
+		stats
+	)
+
 	new_item.item_tier = item_tier
+	new_item.total_gold_cost = total_gold_cost
+
+	# for now don't copy the component tree
+	# It is very computationally expensive to copy the component tree and not used yet
+	#new_item.component_tree = JsonHelper.dict_deep_copy(component_tree)
+
 	return new_item
 
 
@@ -58,6 +74,9 @@ func get_combine_cost() -> int:
 
 
 func calculate_gold_cost() -> int:
+	if total_gold_cost > 0:
+		return total_gold_cost
+	
 	var cost = gold_cost
 	for component in components:
 		var item = RegistryManager.items().get_element(component)
@@ -68,6 +87,63 @@ func calculate_gold_cost() -> int:
 		cost += item.calculate_gold_cost()
 
 	return cost
+
+
+func get_component_tree() -> Dictionary:
+	if total_gold_cost == 0:
+		var components_trees : Array[Dictionary] = []
+		total_gold_cost = gold_cost
+
+		for component in components:
+			var item = RegistryManager.items().get_element(component)
+			if item == null:
+				print("Item (%s): Component item not found." % component)
+				continue
+			
+			components_trees.append(item.get_component_tree())
+			total_gold_cost += item.calculate_gold_cost()
+		
+		component_tree["combine_cost"] = gold_cost
+		component_tree["components"] = components_trees
+		component_tree["resulting_item"] = id.to_string()
+
+	return component_tree
+
+
+func try_purchase(owned_items: Array[Item]) -> Dictionary:
+	if owned_items == null:
+		return {
+			"cost": calculate_gold_cost(),
+			"owned_items": owned_items
+		}
+
+	var shadow_inventory : Array[Item] = []
+	for item in owned_items:
+		shadow_inventory.append(item.get_copy())
+
+	var remaining_cost = gold_cost
+	for component in components:
+		var found = false
+		for shadow_item in shadow_inventory:
+			if shadow_item.get_id().to_string() == component:
+				shadow_inventory.erase(shadow_item)
+				found = true
+				break
+		
+		if not found:
+			var item = RegistryManager.items().get_element(component)
+			if item == null:
+				print("Item (%s): Component item not found." % component)
+				continue
+			
+			var tried_purchase = item.try_purchase(shadow_inventory)
+			shadow_inventory = tried_purchase["owned_items"]
+			remaining_cost += tried_purchase["cost"]
+
+	return {
+		"cost": remaining_cost,
+		"owned_items": shadow_inventory
+	}
 
 
 func is_valid(item_registry: RegistryBase = null) -> bool:
@@ -104,7 +180,8 @@ func is_valid(item_registry: RegistryBase = null) -> bool:
 			
 			if comp_item.item_tier > highest_tier:
 				highest_tier = comp_item.item_tier
-			
+	
+	get_component_tree()
 	item_tier = highest_tier + 1
 
 	return true

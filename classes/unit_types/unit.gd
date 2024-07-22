@@ -505,12 +505,12 @@ func give_gold(amount: int):
 	current_gold += amount
 
 
-func purchase_item(_item: Item, gold_cost: int):
+func purchase_item(_item: Item, gold_cost: int, new_inventory: Array[Item]):
+	item_list = new_inventory
 	current_gold -= gold_cost
-
-	var new_item = _item.get_copy()
-	item_list.append(new_item)
 	
+	var new_item = _item.get_copy()
+	new_inventory.append(new_item)
 	maximum_stats.add(new_item.get_stats())
 	current_stats.add(new_item.get_stats())
 

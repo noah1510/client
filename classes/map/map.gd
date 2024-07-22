@@ -240,13 +240,15 @@ func try_purchase_item(item_name):
 		print("Failed to find item: " + str(item_name))
 		return
 
-	var total_cost = item.calculate_gold_cost()
-	if character.current_gold < total_cost:
-		print("Not enough gold!")
+	var tried_purchase : Dictionary = item.try_purchase(character.item_list)
+	var purchase_cost = tried_purchase["cost"]
+	if character.current_gold < purchase_cost:
+		print("Missing %d gold to purchase item: %s" % [purchase_cost - character.current_gold, item_name])
 		return
 
 	print("Purchasing item: " + str(item_name))
-	character.purchase_item(item, total_cost)
+	var new_inventory = tried_purchase["owned_items"] as Array[Item]
+	character.purchase_item(item, purchase_cost, new_inventory)
 
 
 @rpc("any_peer", "call_local")

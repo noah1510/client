@@ -348,6 +348,27 @@ func get_character(pid: int) -> Node:
 
 
 func try_purchasing_item(item_name: String) -> void:
+	# Before requesting it form the server try to purchase it locally.
+	# The checks can be quite expensive to do.
+	# Because of this we do them on the client side first and only relay
+	# the requests to the server that should be possible.
+	# The server will then do the same checks again to make sure the client
+	# didn't cheat.
+	# This should reduce the server load and reduce the chance of causing the
+	# server to lag.
+	var item = RegistryManager.items().get_element(item_name) as Item
+	if item == null:
+		print("Item (%s) not found in registry." % item_name)
+		return
+
+	var purchase_result = item.try_purchase(character.item_list)
+	var total_cost = purchase_result["cost"]
+	if total_cost > character.current_gold:
+		var display_strings = item.get_desctiption_strings()
+		print(tr("ITEM:NOT_ENOUGH_GOLD") % [(total_cost - character.current_gold), display_strings["name"]])
+		return
+
+	# If it is possible to actually purchase the item, request it from the server
 	server_listener.rpc_id(get_multiplayer_authority(), "try_purchase_item", item_name)
 
 
