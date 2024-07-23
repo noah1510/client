@@ -85,6 +85,9 @@ jobs:
       - name: Create the build directory
         run: mkdir build
 
+      - name: Import all assets
+        run: ./godot/${{ matrix.godot_executable }} --headless --import project.godot
+
       - name: Export Client For Linux amd64
         run: ./godot/${{ matrix.godot_executable }} --headless --export-release 'Client ${{ matrix.export_type }}' project.godot
 
