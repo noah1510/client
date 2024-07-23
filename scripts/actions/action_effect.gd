@@ -182,6 +182,10 @@ func connect_to_unit(_unit: Unit) -> void:
 	pass
 
 
+func disconnect_from_unit(_unit: Unit) -> void:
+	pass
+
+
 func get_description_string() -> String:
 	return tr("ACTION_EFFECT:%s" % _display_id.to_string())
 
@@ -194,13 +198,6 @@ func _from_dict(_dict: Dictionary) -> bool:
 	return false
 
 
-# The ready function does nothing by default
-# Child classes will do some setup though
-func _ready() -> void:
-	pass # Replace with function body.
-
-
-# The process function does nothing by default
-# Child classes might do some processing though
-func _process(_delta: float) -> void:
-	pass
+func get_copy() -> ActionEffect:
+	print("ActionEffect.get_copy() is not implemented.")
+	return null

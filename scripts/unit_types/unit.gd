@@ -495,12 +495,22 @@ func give_gold(amount: int):
 
 
 func purchase_item(_item: Item, gold_cost: int, new_inventory: Array[Item]):
+	# make sure the old inventory is disconnected
+	for item in item_list:
+		var item_effects = item.effects
+		for effect in item_effects:
+			effect.disconnect_from_unit(self)
+			action_effects.remove_child(effect)
+	
+
+	# set the inventory to the new one and connect all effects
 	item_list = new_inventory
 
 	for effect in _item.effects:
 		effect.connect_to_unit(self)
 		action_effects.add_child(effect)
 
+	# clear the list of active and passice slots and repopulate them
 	item_slots_active.clear()
 	item_slots_passive.clear()
 
@@ -513,13 +523,17 @@ func purchase_item(_item: Item, gold_cost: int, new_inventory: Array[Item]):
 			else:
 				item_slots_active.append(item)
 	
+	# actually update the gold and the stats
 	current_gold -= gold_cost
 	
 	maximum_stats.add(_item.get_stats())
 	current_stats.add(_item.get_stats())
 
 	current_stats_changed.emit()
+
+	# mark the ui to be updated
 	items_changed = true
+
 
 # Movement
 func update_target_location(target_location: Vector3):

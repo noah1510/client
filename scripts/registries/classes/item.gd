@@ -28,7 +28,9 @@ func get_copy() -> Item:
 	new_item.item_tier = item_tier
 	new_item.total_gold_cost = total_gold_cost
 	new_item.is_active = is_active
-	new_item.effects = effects
+	new_item.effects = []
+	for effect in effects:
+		new_item.effects.append(effect.get_copy())
 
 	# for now don't copy the component tree
 	# It is very computationally expensive to copy the component tree and not used yet

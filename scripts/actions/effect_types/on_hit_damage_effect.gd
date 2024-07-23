@@ -29,6 +29,16 @@ func _from_dict(_dict: Dictionary) -> bool:
 	return true
 
 
+func get_copy() -> ActionEffect:
+	var new_effect = OnHitDamageEffect.new()
+	new_effect.damage = damage
+	new_effect.scaling = scaling
+	new_effect.damage_type = damage_type
+	new_effect.can_crit = can_crit
+
+	return new_effect
+
+
 func get_description_string() -> String:
 	var effect_string = super() + "\n"
 
@@ -49,6 +59,15 @@ func connect_to_unit(_unit: Unit) -> void:
 		_unit.attack_connected.connect(self._on_attack_connected_scaled)
 
 	_is_loaded = true
+
+
+func disconnect_from_unit(_unit: Unit) -> void:
+	if scaling == null:
+		_unit.attack_connected.disconnect(self._on_attack_connected_fixed)
+	else:
+		_unit.attack_connected.disconnect(self._on_attack_connected_scaled)
+
+	_is_loaded = false
 
 
 func _on_attack_connected_fixed(caster: Unit, target: Unit, is_crit: bool, _damage_type) -> void:
