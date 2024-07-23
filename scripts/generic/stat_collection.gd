@@ -144,6 +144,123 @@ func to_dict() -> Dictionary:
     return json_data_object
 
 
+func get_from_name(stat_name: String) -> int:
+    match stat_name:
+        "health": return health
+        "health_regen": return health_regen
+
+        "mana": return mana
+        "mana_regen": return mana_regen
+
+        "armor": return armor
+        "magic_resist": return magic_resist
+
+        "armor_pen_flat": return armor_pen_flat
+        "armor_pen_percent": return armor_pen_percent
+
+        "magic_pen_flat": return magic_pen_flat
+        "magic_pen_percent": return magic_pen_percent
+        
+        "attack_damage": return attack_damage
+        
+        "attack_speed": return attack_speed
+        "attack_range": return attack_range
+        "attack_crit_chance": return attack_crit_chance
+        "attack_crit_damage": return attack_crit_damage
+
+        "ability_power": return ability_power
+        "ability_haste": return ability_haste
+
+        "omnivamp": return omnivamp
+        "physical_vamp": return physical_vamp
+        "magic_vamp": return magic_vamp
+        "true_vamp": return true_vamp
+
+        "movement_speed": return movement_speed
+
+    print ("StatCollection.get_from_abbrev: Unknown stat abbreviation: ", stat_name)
+    return 0
+
+
+static func get_full_stat_name(abbrev_stat: String, ret_abbrev: bool = true) -> String:
+    match abbrev_stat:
+        "hp": return "health"
+        "reg_hp": return "health_regen"
+
+        "mp": return "mana"
+        "reg_mp": return "mana_regen"
+
+        "res_phy": return "armor"
+        "res_mag": return "magic_resist"
+
+        "pen_f_phy": return "armor_pen_flat"
+        "pen_p_phy": return "armor_pen_percent"
+
+        "pen_f_mag": return "magic_pen_flat"
+        "pen_p_mag": return "magic_pen_percent"
+
+        "dmg_phy": return "attack_damage"
+
+        "atk_spd": return "attack_speed"
+        "atk_rng": return "attack_range"
+        "atk_crit": return "attack_crit_chance"
+        "atk_crit_dmg": return "attack_crit_damage"
+
+        "ap": return "ability_power"
+        "ah": return "ability_haste"
+
+        "vamp_all": return "omnivamp"
+        "vamp_phy": return "physical_vamp"
+        "vamp_mag": return "magic_vamp"
+        "vamp_tru": return "true_vamp"
+
+        "ms": return "movement_speed"
+
+    
+    print("StatCollection.get_full_stat_name: Unknown stat abbreviation: ", abbrev_stat)
+    if ret_abbrev:
+        return abbrev_stat
+    
+    return ""
+
+
+static func get_stat_getter(stat_name: String) -> Callable:
+    match stat_name:
+        "health": return func (stats: StatCollection) -> int: return stats.health
+        "health_regen": return func (stats: StatCollection) -> int: return stats.health_regen
+
+        "mana": return func (stats: StatCollection) -> int: return stats.mana
+        "mana_regen": return func (stats: StatCollection) -> int: return stats.mana_regen
+
+        "armor": return func (stats: StatCollection) -> int: return stats.armor
+        "magic_resist": return func (stats: StatCollection) -> int: return stats.magic_resist
+
+        "armor_pen_flat": return func (stats: StatCollection) -> int: return stats.armor_pen_flat
+        "armor_pen_percent": return func (stats: StatCollection) -> int: return stats.armor_pen_percent
+
+        "magic_pen_flat": return func (stats: StatCollection) -> int: return stats.magic_pen_flat
+        "magic_pen_percent": return func (stats: StatCollection) -> int: return stats.magic_pen_percent
+
+        "attack_damage": return func (stats: StatCollection) -> int: return stats.attack_damage
+        "attack_speed": return func (stats: StatCollection) -> int: return stats.attack_speed
+        "attack_range": return func (stats: StatCollection) -> int: return stats.attack_range
+        "attack_crit_chance": return func (stats: StatCollection) -> int: return stats.attack_crit_chance
+        "attack_crit_damage": return func (stats: StatCollection) -> int: return stats.attack_crit_damage
+
+        "ability_power": return func (stats: StatCollection) -> int: return stats.ability_power
+        "ability_haste": return func (stats: StatCollection) -> int: return stats.ability_haste
+
+        "omnivamp": return func (stats: StatCollection) -> int: return stats.omnivamp
+        "physical_vamp": return func (stats: StatCollection) -> int: return stats.physical_vamp
+        "magic_vamp": return func (stats: StatCollection) -> int: return stats.magic_vamp
+        "true_vamp": return func (stats: StatCollection) -> int: return stats.true_vamp
+
+        "movement_speed": return func (stats: StatCollection) -> int: return stats.movement_speed
+
+    print("StatCollection.get_stat_getter: Unknown stat name: ", stat_name)
+    return func (_stats: StatCollection) -> int: return 0
+
+
 func get_copy() -> StatCollection:
     var stat = StatCollection.new()
     stat.add(self)

@@ -21,7 +21,8 @@ func _from_dict(_dict: Dictionary) -> bool:
 
 	damage = JsonHelper.get_optional_int(_dict, "damage", 0)
 
-	# TODO: Load the scaling function from the dictionary
+	if _dict.has("scaling"):
+		scaling = ScalingsBuilder.build_scaling_function(str(_dict["scaling"]))
 
 	damage_type = JsonHelper.get_optional_enum(_dict, "damage_type", Unit.ParseDamageType, Unit.DamageType.PHYSICAL) as Unit.DamageType
 	can_crit = JsonHelper.get_optional_bool(_dict, "can_crit", false)
