@@ -260,13 +260,13 @@ func try_purchase_item(item_name):
 			active_items += 1
 
 	if active_items > character.active_item_slots:
-		var display_strings = item.get_desctiption_strings()
+		var display_strings = item.get_desctiption_strings(character)
 		print("Not enough active slots to but %s" % display_strings["name"])
 		return
 
 	var new_item_count = new_inventory.size() + 1
 	if new_item_count > character.passive_item_slots + character.active_item_slots:
-		var display_strings = item.get_desctiption_strings()
+		var display_strings = item.get_desctiption_strings(character)
 		print(tr("Not enough inventory slots to buy %s") % display_strings["name"])
 		return
 

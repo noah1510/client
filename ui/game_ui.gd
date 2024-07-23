@@ -80,7 +80,7 @@ func _update_items():
 			var item = _character.item_slots_passive[index] as Item
 			var icon = _get_item_texture(item)
 			if icon != null:
-				item_box = _create_item_box(icon, item.get_tooltip_string(), "")
+				item_box = _create_item_box(icon, item.get_tooltip_string(_character), "")
 
 		if item_box == null:
 			item_box = _create_item_box(null, "", "")

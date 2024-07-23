@@ -186,7 +186,7 @@ func disconnect_from_unit(_unit: Unit) -> void:
 	pass
 
 
-func get_description_string() -> String:
+func get_description_string(_caster: Unit) -> String:
 	return tr("ACTION_EFFECT:%s" % _display_id.to_string())
 
 

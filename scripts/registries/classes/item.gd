@@ -43,7 +43,7 @@ func get_id() -> Identifier:
 	return id
 
 
-func get_desctiption_strings() -> Dictionary:
+func get_desctiption_strings(_caster: Unit = null) -> Dictionary:
 	var item_descriptions = {}
 	item_descriptions["name"] = tr("ITEM:%s:NAME" % id.to_string())
 	item_descriptions["lore"] = tr("ITEM:%s:LORE" % id.to_string())
@@ -62,15 +62,15 @@ func get_desctiption_strings() -> Dictionary:
 
 	var effect_string = ""
 	for effect in effects:
-		effect_string += effect.get_description_string() + "\n"
+		effect_string += effect.get_description_string(_caster) + "\n"
 	
 	item_descriptions["effects"] = effect_string
 
 	return item_descriptions
 
 
-func get_tooltip_string() -> String:
-	var item_desctiptions = get_desctiption_strings()
+func get_tooltip_string(_caster: Unit = null) -> String:
+	var item_desctiptions = get_desctiption_strings(_caster)
 
 	if effects.is_empty():
 		return "%s\n%s\n\n%s\n%s" % [

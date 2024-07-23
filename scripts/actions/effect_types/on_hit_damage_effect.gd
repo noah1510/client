@@ -7,7 +7,8 @@ var damage : int = 0
 ## The scaling function for the damage.
 ## This function should take the caster and the target as arguments
 ## and return the damage value as an integer.
-var scaling = null
+var scaling_calc = null
+var scaling_display = null
 
 var damage_type : Unit.DamageType = Unit.DamageType.PHYSICAL
 
@@ -22,7 +23,13 @@ func _from_dict(_dict: Dictionary) -> bool:
 	damage = JsonHelper.get_optional_int(_dict, "damage", 0)
 
 	if _dict.has("scaling"):
-		scaling = ScalingsBuilder.build_scaling_function(str(_dict["scaling"]))
+		var scaling_funcs = ScalingsBuilder.build_scaling_function(str(_dict["scaling"]))
+		if scaling_funcs == null:
+			print("Could not create OnHitDamageEffect from dictionary. Could not build scaling function.")
+			return false
+
+		scaling_calc = scaling_funcs[0]
+		scaling_display = scaling_funcs[1] 
 
 	damage_type = JsonHelper.get_optional_enum(_dict, "damage_type", Unit.ParseDamageType, Unit.DamageType.PHYSICAL) as Unit.DamageType
 	can_crit = JsonHelper.get_optional_bool(_dict, "can_crit", false)
@@ -33,28 +40,29 @@ func _from_dict(_dict: Dictionary) -> bool:
 func get_copy() -> ActionEffect:
 	var new_effect = OnHitDamageEffect.new()
 	new_effect.damage = damage
-	new_effect.scaling = scaling
+	new_effect.scaling_calc = scaling_calc
 	new_effect.damage_type = damage_type
 	new_effect.can_crit = can_crit
 
 	return new_effect
 
 
-func get_description_string() -> String:
-	var effect_string = super() + "\n"
+func get_description_string(_caster: Unit) -> String:
+	var effect_string = super(_caster) + "\n"
+	var damage_type_string = Unit.ParseDamageType.find_key(damage_type)
+	var damage_type_translation = tr("DAMAGE_TYPE:"+damage_type_string+":NAME")
 
-	if scaling != null:
-		# TODO: Add scaling description
-		effect_string += "Scaling with something\n"
+	if scaling_calc != null:
+		var scaling_string = scaling_display.call(_caster)
+		effect_string += tr("EFFECT:OnHitDamageEffect:scaled") % [scaling_string, damage_type_translation]
 	else:
-		var damage_type_string = Unit.ParseDamageType.find_key(damage_type)
-		effect_string += tr("EFFECT:OnHitDamageEffect:flat") % [damage, tr("DAMAGE_TYPE:"+damage_type_string+":NAME")]
+		effect_string += tr("EFFECT:OnHitDamageEffect:flat") % [damage, damage_type_translation]
 
 	return effect_string
 
 
 func connect_to_unit(_unit: Unit) -> void:
-	if scaling == null:
+	if scaling_calc == null:
 		_unit.attack_connected.connect(self._on_attack_connected_fixed)
 	else:
 		_unit.attack_connected.connect(self._on_attack_connected_scaled)
@@ -63,7 +71,7 @@ func connect_to_unit(_unit: Unit) -> void:
 
 
 func disconnect_from_unit(_unit: Unit) -> void:
-	if scaling == null:
+	if scaling_calc == null:
 		_unit.attack_connected.disconnect(self._on_attack_connected_fixed)
 	else:
 		_unit.attack_connected.disconnect(self._on_attack_connected_scaled)
@@ -87,7 +95,7 @@ func _on_attack_connected_scaled(caster: Unit, target: Unit, is_crit: bool, _dam
 	if not target.is_alive:
 		return
 	
-	var _damage = int(scaling.call(caster, target))
+	var _damage = int(scaling_calc.call(caster, target))
 
 	target.take_damage(
 		caster,

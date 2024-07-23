@@ -364,7 +364,7 @@ func try_purchasing_item(item_name: String) -> void:
 	var purchase_result = item.try_purchase(character.item_list)
 	var total_cost = purchase_result["cost"]
 	if total_cost > character.current_gold:
-		var display_strings = item.get_desctiption_strings()
+		var display_strings = item.get_desctiption_strings(character)
 		print(tr("ITEM:NOT_ENOUGH_GOLD") % [(total_cost - character.current_gold), display_strings["name"]])
 		return
 
@@ -377,13 +377,13 @@ func try_purchasing_item(item_name: String) -> void:
 			active_items += 1
 
 	if active_items > character.active_item_slots:
-		var display_strings = item.get_desctiption_strings()
+		var display_strings = item.get_desctiption_strings(character)
 		print(tr("ITEM:NOT_ENOUGH_ACTIVE_SLOTS") % display_strings["name"])
 		return
 
 	var new_item_count = new_inventory.size() + 1
 	if new_item_count > character.passive_item_slots + character.active_item_slots:
-		var display_strings = item.get_desctiption_strings()
+		var display_strings = item.get_desctiption_strings(character)
 		print(tr("ITEM:NOT_ENOUGH_SLOTS") % display_strings["name"])
 		return
 	
