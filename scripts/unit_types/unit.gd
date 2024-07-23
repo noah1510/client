@@ -131,9 +131,6 @@ var attack_range_visualizer : MeshInstance3D
 
 var action_effects : Node
 
-# UI
-var healthbar : ProgressBar
-
 # Preloaded scripts and scenes
 const state_machine_script = preload("res://scripts/states/_state_machine.gd")
 const state_idle_script = preload("res://scripts/states/unit_idle.gd")
@@ -177,6 +174,7 @@ func _init():
 func _ready():
 	_setup_scene_elements()
 	_setup_default_signals()
+	current_stats_changed.emit()
 
 
 func _setup_scene_elements():
@@ -287,9 +285,8 @@ func _setup_scene_elements():
 	var healthbar_node = healthbar_scene.instantiate()
 	healthbar_node.name = "Healthbar"
 	add_child(healthbar_node)
-	healthbar = get_node("Healthbar")
-	healthbar.max_value = maximum_stats.health
-	healthbar.sync(current_stats.health)
+	healthbar_node._update_healthbar(self)
+	current_stats_changed.connect(func (): healthbar_node._update_healthbar(self))
 
 	# set up the attack range visualizer
 	var attack_range_mesh = TorusMesh.new()
@@ -337,8 +334,6 @@ func _setup_scene_elements():
 
 
 func _setup_default_signals():
-	# update the healthbar when the stats change
-	current_stats_changed.connect(func (): _update_healthbar(healthbar))
 
 	# update the attack range visualizer when the stats change
 	current_stats_changed.connect(func ():
@@ -610,12 +605,6 @@ func die(murderer = null):
 
 	if team > 0:
 		deaths += 1
-
-
-# UI
-func _update_healthbar(node: ProgressBar):
-	node.value = current_stats.health
-	node.max_value = maximum_stats.health
 
 
 func move_on_path(delta: float) -> bool:
