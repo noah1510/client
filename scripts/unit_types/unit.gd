@@ -48,7 +48,7 @@ signal windup_finished (caster: Unit, target: Unit)
 ## Gets emitted on the caster when the attack projectile hit the target or the melee attack landed.
 ## Use this to apply effects to the target or the caster.
 ## On hit damage effects should use this signal to apply additinal damage effects.
-signal attack_connected (caster: Unit, target: Unit, is_crit: bool)
+signal attack_connected (caster: Unit, target: Unit, is_crit: bool, damage_type: DamageType)
 
 ## Gets emitted on the caster after the target damage calculation has been done.
 ## This signal is used to trigger post hit effects like healing or lifesteal.
@@ -361,50 +361,17 @@ func _setup_default_signals():
 			if caster != self: return
 			if target != target_entity: return
 
-			attack_connected.emit(self, target, should_crit())
+			attack_connected.emit(self, target, should_crit(), DamageType.PHYSICAL)
 		)
 
 	# Deal the damage when the attack hits
-	attack_connected.connect(func (caster, target, is_crit):
-		if caster != self: return
-
-		var damage = current_stats.attack_damage
-		if is_crit: damage *= (100 + current_stats.attack_crit_damage) * 0.01
-
-		target.take_damage(caster, is_crit, DamageType.PHYSICAL, damage)
-	)
+	attack_connected.connect(_attack_connected)
 
 	# Handle life steal after actual damage has been dealt
-	actual_damage_dealt.connect(func (caster: Unit, _target: Unit, _is_crit: bool, damage_type: DamageType, damage: int):
-		if caster != self: return
-
-		var total_vamp : int = current_stats.omnivamp
-		if damage_type == DamageType.PHYSICAL: total_vamp += current_stats.physical_vamp
-		if damage_type == DamageType.MAGICAL: total_vamp += current_stats.magic_vamp
-		if damage_type == DamageType.TRUE: total_vamp += current_stats.true_vamp
-
-		total_vamp = clampi(total_vamp, 0, 100)
-
-		if total_vamp > 0:
-			var heal_amount = int(damage * total_vamp * 0.01)
-			self.healed.emit(self, self, heal_amount)
-	)
+	actual_damage_dealt.connect(_damage_actually_dealt)
 
 	# Handle healing effects being applied
-	healed.connect(func (_caster: Unit, target: Unit, amount: float):
-		if target != self: return
-
-		current_stats.health += int(amount)
-
-		if current_stats.health >= maximum_stats.health: 
-			if overheal:
-				var extra_health = current_stats.health - maximum_stats.health
-				current_shielding = clampi(current_shielding + extra_health, 0, max_overheal)
-			
-			current_stats.health = maximum_stats.health
-		
-		current_stats_changed.emit()
-	)
+	healed.connect(_healed_handler)
 
 
 func spawn_projectile(_args):
@@ -722,6 +689,45 @@ func can_change_target() -> bool:
 
 func can_take_damage() -> bool:
 	return cc_state & CCTypesRegistry.CC_MASK_TAKE_DAMAGE == 0
+
+
+func _attack_connected(caster, target, is_crit, damage_type):
+	if caster != self: return
+
+	var damage = current_stats.attack_damage
+	if is_crit: damage *= (100 + current_stats.attack_crit_damage) * 0.01
+
+	target.take_damage(caster, is_crit, damage_type, damage)
+
+
+func _damage_actually_dealt(caster: Unit, _target: Unit, _is_crit: bool, damage_type: DamageType, damage: int):
+	if caster != self: return
+
+	var total_vamp : int = current_stats.omnivamp
+	if damage_type == DamageType.PHYSICAL: total_vamp += current_stats.physical_vamp
+	if damage_type == DamageType.MAGICAL: total_vamp += current_stats.magic_vamp
+	if damage_type == DamageType.TRUE: total_vamp += current_stats.true_vamp
+
+	total_vamp = clampi(total_vamp, 0, 100)
+
+	if total_vamp > 0:
+		var heal_amount = int(damage * total_vamp * 0.01)
+		self.healed.emit(self, self, heal_amount)
+
+
+func _healed_handler(_caster: Unit, target: Unit, amount: float):
+	if target != self: return
+
+	current_stats.health += int(amount)
+
+	if current_stats.health >= maximum_stats.health: 
+		if overheal:
+			var extra_health = current_stats.health - maximum_stats.health
+			current_shielding = clampi(current_shielding + extra_health, 0, max_overheal)
+		
+		current_stats.health = maximum_stats.health
+	
+	current_stats_changed.emit()
 
 
 @rpc("authority", "call_local")

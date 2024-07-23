@@ -15,63 +15,63 @@ var can_crit : bool = false
 
 
 func _from_dict(_dict: Dictionary) -> bool:
-    if not _dict.has("damage") and not _dict.has("scaling"):
-        print("Could not create OnHitDamageEffect from dictionary. Dictionary is missing required keys.")
-        return false
+	if not _dict.has("damage") and not _dict.has("scaling"):
+		print("Could not create OnHitDamageEffect from dictionary. Dictionary is missing required keys.")
+		return false
 
-    damage = JsonHelper.get_optional_int(_dict, "damage", 0)
+	damage = JsonHelper.get_optional_int(_dict, "damage", 0)
 
-    # TODO: Load the scaling function from the dictionary
+	# TODO: Load the scaling function from the dictionary
 
-    damage_type = JsonHelper.get_optional_enum(_dict, "damage_type", Unit.ParseDamageType, Unit.DamageType.PHYSICAL) as Unit.DamageType
-    can_crit = JsonHelper.get_optional_bool(_dict, "can_crit", false)
+	damage_type = JsonHelper.get_optional_enum(_dict, "damage_type", Unit.ParseDamageType, Unit.DamageType.PHYSICAL) as Unit.DamageType
+	can_crit = JsonHelper.get_optional_bool(_dict, "can_crit", false)
 
-    return true
+	return true
 
 
 func get_description_string() -> String:
-    var effect_string = super() + "\n"
+	var effect_string = super() + "\n"
 
-    if scaling != null:
-        # TODO: Add scaling description
-        effect_string += "Scaling with something\n"
-    else:
-        var damage_type_string = Unit.ParseDamageType.find_key(damage_type)
-        effect_string += tr("EFFECT:OnHitDamageEffect:flat") % [damage, tr("DAMAGE_TYPE:"+damage_type_string+":NAME")]
+	if scaling != null:
+		# TODO: Add scaling description
+		effect_string += "Scaling with something\n"
+	else:
+		var damage_type_string = Unit.ParseDamageType.find_key(damage_type)
+		effect_string += tr("EFFECT:OnHitDamageEffect:flat") % [damage, tr("DAMAGE_TYPE:"+damage_type_string+":NAME")]
 
-    return effect_string
+	return effect_string
 
 
 func connect_to_unit(_unit: Unit) -> void:
-    if scaling == null:
-        _unit.attack_connected.connect(_on_attack_connected_fixed)
-    else:
-        _unit.attack_connected.connect(_on_attack_connected_scaled)
+	if scaling == null:
+		_unit.attack_connected.connect(self._on_attack_connected_fixed)
+	else:
+		_unit.attack_connected.connect(self._on_attack_connected_scaled)
+
+	_is_loaded = true
 
 
-func _on_attack_connected_fixed(caster: Unit, target: Unit, is_crit: bool) -> void:
-    if not target.is_alive:
-        return
+func _on_attack_connected_fixed(caster: Unit, target: Unit, is_crit: bool, _damage_type) -> void:
+	if not target.is_alive:
+		return
 
-    target.take_damage(
-        caster,
-        can_crit and is_crit,
-        damage_type,
-        damage
-    )
-
-
-func _on_attack_connected_scaled(caster: Unit, target: Unit, is_crit: bool) -> void:
-    if not target.is_alive:
-        return
-    
-    var _damage = int(scaling.call(caster, target))
-
-    target.take_damage(
-        caster,
-        can_crit and is_crit,
-        damage_type,
-        _damage
-    )
+	target.take_damage(
+		caster,
+		can_crit and is_crit,
+		damage_type,
+		damage
+	)
 
 
+func _on_attack_connected_scaled(caster: Unit, target: Unit, is_crit: bool, _damage_type) -> void:
+	if not target.is_alive:
+		return
+	
+	var _damage = int(scaling.call(caster, target))
+
+	target.take_damage(
+		caster,
+		can_crit and is_crit,
+		damage_type,
+		_damage
+	)

@@ -81,11 +81,6 @@ var _activation_state: ActivationState = ActivationState.NONE
 var _ability_type: AbilityType = AbilityType.PASSIVE
 
 
-## The currently running timer for the action effect
-## If nothing is running this should be null
-var _current_timer: Timer = null
-
-
 ## Indicates if the action effect has been loaded and is ready to be used
 ## This should be false until _from_dict has been called
 var _is_loaded: bool = false
@@ -158,11 +153,6 @@ func get_ability_type() -> AbilityType:
 	return _ability_type
 
 
-## Get the currently running timer for the action effect
-func get_current_timer() -> Timer:
-	return _current_timer
-
-
 ## Check if the action effect has been loaded and is ready to be used
 ## This should always be true if an action effect has been created
 ## succefully with from_dict.
@@ -202,11 +192,6 @@ func get_description_string() -> String:
 ## The return value should be true if the loading was successful
 func _from_dict(_dict: Dictionary) -> bool:
 	return false
-
-
-## Updates the action effect once the current timer has finished.
-func _on_timer_timeout() -> void:
-	pass
 
 
 # The ready function does nothing by default
