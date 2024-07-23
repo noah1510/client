@@ -84,17 +84,13 @@ static func _get_next_scaled_stat(tokens):
 
 	match stat_spec[1]:
 		"l", "lvl", "level":
+			display_func = _get_level_translation(actor, next_scaling_value)
 			if actor == "caster":
 				stat_func = func(_caster, _target) -> float: return next_scaling_value * _caster.level
-				display_func = func(_caster) -> String :
-					return "%.3f caster level (%.3f = %.3f * %.3f)" % [
-						next_scaling_value, next_scaling_value*_caster.level, next_scaling_value, float(_caster.level)
-					]
-				return [stat_func, display_func]
 			else:
 				stat_func = func(_caster, _target) -> float: return next_scaling_value * _target.level
-				display_func = func(_caster) -> String : return "%.3f target level" % next_scaling_value
-				return [stat_func, display_func]
+			
+			return [stat_func, display_func]
 		"m", "max":
 			stat_set = "max"
 		"c", "curr", "current":
@@ -113,19 +109,10 @@ static func _get_next_scaled_stat(tokens):
 	var stat_getter = StatCollection.get_stat_getter(stat_name)
 	var final_stat_getter = create_unit_stat_getter_func(stat_set, stat_getter)
 	
+	display_func = _get_stat_translation(actor, stat_set, stat_name, next_scaling_value, final_stat_getter)
 	if actor == "caster":
-		display_func = func(_caster) -> String :
-			if _caster == null:
-				return "%.3f caster %s %s" % [next_scaling_value, stat_set, stat_name]
-			
-			var stat_value = float(final_stat_getter.call(_caster))
-			return "%.3f caster %s %s (%.3f = %.3f * %.3f)" % [
-				next_scaling_value, stat_set, stat_name, next_scaling_value*stat_value, next_scaling_value, stat_value
-			]
-
 		stat_func = func(_caster, _target) -> float: return next_scaling_value * final_stat_getter.call(_caster)
 	else:
-		display_func = func(_caster) -> String : return "%.3f target %s %s" % [next_scaling_value, stat_set, stat_name]
 		stat_func = func(_caster, _target) -> float: return next_scaling_value * final_stat_getter.call(_target)
 
 	return [stat_func, display_func]
@@ -142,3 +129,52 @@ static func create_unit_stat_getter_func(stat_set: String, stat_getter: Callable
 		_:
 			print("Invalid stat set " + stat_set)
 			return func(_unit) -> float: return 0.0
+
+
+static func _get_stat_translation(actor: String, stat_set: String, stat_name: String, scaling_value: float, final_stat_getter: Callable) -> Callable:
+	return func(_unit) -> String:
+		var actor_trans = _tr("SCALING:ACTOR:" + actor)
+		var stat_trans = _tr("STAT:" + stat_name + ":NAME")
+		var set_trans = _tr("SCALING:STAT_SET:" + stat_set)
+
+		var display_message = _tr("SCALING:BY_STAT") % [
+			scaling_value,
+			actor_trans,
+			set_trans,
+			stat_trans,
+		]
+
+		if actor != "caster":
+			return display_message
+
+		if _unit == null:
+			return display_message
+
+		var stat_value = float(final_stat_getter.call(_unit))
+		display_message += _tr("SCALING:VALUE_CALCULATION") % [
+			scaling_value * stat_value,
+			scaling_value,
+			stat_value,
+		]
+
+		return display_message
+
+
+static func _get_level_translation(actor: String, scaling_value: float) -> Callable:
+	return  func(_caster) -> String :
+		var actor_trans = _tr("SCALING:ACTOR:" + actor)
+
+		var display_message = _tr("SCALING:BY_LEVEL") % [scaling_value, actor_trans]
+
+		if actor != "caster":
+			return display_message
+		
+		if _caster == null:
+			return display_message
+		
+		display_message += _tr("SCALING:VALUE_CALCULATION") % [scaling_value*_caster.level, scaling_value, _caster.level]
+		return display_message
+
+
+static func _tr(message: String) -> String:
+	return TranslationServer.translate(message)
