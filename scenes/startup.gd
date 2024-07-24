@@ -8,7 +8,7 @@ enum Start {
 	INTEGRATED,
 	SPECTATOR
 }
-var start_type := Start.SPECTATOR
+var start_type := Start.INTEGRATED
 const map_base_script := preload("res://scripts/map/map.gd")
 
 @onready var args := Array(OS.get_cmdline_args())
