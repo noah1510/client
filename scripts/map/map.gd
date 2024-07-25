@@ -28,6 +28,8 @@ const player_desktop_hud = preload("res://ui/game_ui.tscn")
 const player_desktop_settings = preload("res://ui/settings_menu/settings_menu.tscn")
 const player_item_shop = preload("res://ui/shops/item_shop.tscn")
 
+const dmg_popup_scene = preload("res://scenes/effects/damage_popup.tscn")
+
 
 func _ready():
 	_load_config()
@@ -83,6 +85,17 @@ func _setup_nodes():
 	var abilities_node = Node.new()
 	abilities_node.name = "Abilities"
 	add_child(abilities_node)
+
+	var damage_popup_node = Node.new()
+	damage_popup_node.name = "DamagePopups"
+	add_child(damage_popup_node)
+
+	var damage_popup_spawner = MultiplayerSpawner.new()
+	damage_popup_spawner.name ="DamagePopupSpawner"
+	damage_popup_spawner.spawn_path = NodePath("../DamagePopups")
+	damage_popup_spawner.spawn_limit = 999
+	damage_popup_spawner.spawn_function = _spawn_damage_popup
+	add_child(damage_popup_spawner)
 	
 
 func _spawn_character(args):
@@ -110,6 +123,21 @@ func _spawn_character(args):
 		new_char.died.connect(func(): on_player_death(spawn_args["id"]))
 
 	return new_char
+
+
+func _spawn_damage_popup(args):
+	var spawn_args = args as Dictionary
+	
+	if not spawn_args:
+		print("Error damage popup spawn args could now be parsed as dict!")
+		return null
+	
+	var new_popup = dmg_popup_scene.instantiate()
+	new_popup.spawn_position = spawn_args["position"] as Vector3
+	new_popup.damage_value = int(spawn_args["value"])
+	new_popup.damage_type = spawn_args["type"]
+
+	return new_popup
 
 
 func _load_config():
@@ -181,6 +209,15 @@ func client_setup():
 	var item_shop = player_item_shop.instantiate()
 	item_shop.player_instance = player_rig
 	add_child(item_shop)
+
+
+func on_unit_damaged(unit: Unit, damage: int, damage_type: Unit.DamageType):
+	var damage_popup_args = {
+		"position": unit.server_position,
+		"value": damage,
+		"type": damage_type
+	}
+	$DamagePopupSpawner.spawn(damage_popup_args)
 
 
 func on_player_death(player_id: int):
@@ -332,7 +369,7 @@ func spawn_local_effect(ability_name, ability_type, ability_pos, player_pos, pla
 	ability_scene.team = player_team
 
 	$"../Abilities".add_child(ability_scene)
-	
+
 
 @rpc("any_peer", "call_local")
 func respawn(character: Unit):

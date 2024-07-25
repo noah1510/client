@@ -579,11 +579,15 @@ func take_damage(caster: Unit, is_crit: bool, damage_type: DamageType, damage_am
 		current_stats.health -= actual_damage
 		caster.actual_damage_dealt.emit(caster, self, is_crit, damage_type, actual_damage)
 	
+		# notify the map that damage was dealt
+		# This spawns the damage popup on all clients
+		map.on_unit_damaged(self, actual_damage, damage_type)
+	
 	# If the health is 0 or less, the unit dies and we register the caster as the murderer.
 	if current_stats.health <= 0:
 		current_stats.health = 0
 		die(caster)
-	
+
 	# This simply updates all UI elements with the latest stats
 	current_stats_changed.emit()
 
