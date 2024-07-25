@@ -185,5 +185,10 @@ func _multiplayer_spawn_unit(data: Dictionary):
 	_unit.died.connect(
 		func(): _on_unit_death(_unit)
 	)
+
+	if map == null:
+		print("Map is null not setting it in spawner")
+		return _unit
+	
 	_unit.map = map
 	return _unit
