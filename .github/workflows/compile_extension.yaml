@@ -35,7 +35,7 @@ jobs:
             extensions/godot-cpp
             extensions/build
           save-always: true
-          key: extension_cache_${{ matrix.os }}_${{ matrix.build_mode }}_${{ matrix.arch }}_4_3_0_beta2
+          key: extension_cache_${{ matrix.os }}_${{ matrix.build_mode }}_${{ matrix.arch }}_4_3_0_rc1
 
       - name: get submodules if cache miss
         if: steps.cache.outputs.cache-hit != 'true'
