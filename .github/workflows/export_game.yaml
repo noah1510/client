@@ -1,6 +1,6 @@
 on:
   workflow_call:
-    input:
+    inputs:
       EXPORT_TEMPLATE_VERSION:
         description: 'The godot export template version string'
         required: true

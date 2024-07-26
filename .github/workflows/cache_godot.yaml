@@ -1,6 +1,6 @@
 on:
   workflow_call:
-    input:
+    inputs:
       GODOT_VERSION:
         description: 'The godot version string'
         required: true
