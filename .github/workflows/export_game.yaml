@@ -56,7 +56,7 @@ jobs:
           path: godot
           enableCrossOsArchive: true
           fail-on-cache-miss: true
-          key: godot_4_3_0_rc1_rev1
+          key: godot_4_3_0_rc1_rev2
 
       - name: Retreive extensions artifacts
         uses: actions/download-artifact@v4
