@@ -133,9 +133,9 @@ var action_effects : Node
 
 # Preloaded scripts and scenes
 const state_machine_script = preload("res://scripts/states/_state_machine.gd")
-const state_idle_script = preload("res://scripts/states/unit_idle.gd")
-const state_move_script = preload("res://scripts/states/unit_move.gd")
-const state_auto_attack_script = preload("res://scripts/states/unit_auto_attack.gd")
+const state_idle_script = preload("res://scripts/states/state_types/unit_idle.gd")
+const state_move_script = preload("res://scripts/states/state_types/unit_move.gd")
+const state_auto_attack_script = preload("res://scripts/states/state_types/unit_auto_attack.gd")
 
 const healthbar_scene = preload("res://ui/player_stats/healthbar.tscn")
 
@@ -739,6 +739,12 @@ func _healed_handler(_caster: Unit, target: Unit, amount: float):
 		current_stats.health = maximum_stats.health
 	
 	current_stats_changed.emit()
+
+
+func get_current_state_name() -> String:
+	var curr_state = $StateMachine.current_state
+	if curr_state == null: return ""
+	return curr_state.name
 
 
 @rpc("authority", "call_local")

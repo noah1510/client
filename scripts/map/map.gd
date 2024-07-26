@@ -24,6 +24,8 @@ var last_player_index = 0
 
 var player_passive_item_slots = 2
 
+const player_controller = preload("res://scenes/player/_player.tscn")
+
 const player_desktop_hud = preload("res://ui/game_ui.tscn")
 const player_desktop_settings = preload("res://ui/settings_menu/settings_menu.tscn")
 const player_item_shop = preload("res://ui/shops/item_shop.tscn")
@@ -196,7 +198,7 @@ func _load_config():
 func client_setup():
 	# Add the player into the world
 	# The player rig will ask the server for their character
-	var player_rig = load("res://scenes/player/_player.tscn").instantiate()
+	var player_rig = player_controller.instantiate()
 	add_child(player_rig)
 	
 	# instantiate and add all the UI components

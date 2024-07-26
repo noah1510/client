@@ -17,6 +17,8 @@ var is_left_mouse_dragging := false
 var character : Unit
 var attack_collider : Area3D
 
+var last_movement_gamepad = false
+
 @onready var marker = MoveMarker.instantiate()
 #@export var player := 1:
 	#set(id):
@@ -61,16 +63,14 @@ func _input(event):
 		return
 	
 	if event is InputEventMouseButton:
+		last_movement_gamepad = false
 		
-		if event.button_index == MOUSE_BUTTON_LEFT and not is_right_mouse_dragging:
-			player_mouse_action(event, not is_left_mouse_dragging, true)
-			if event.is_pressed and not is_left_mouse_dragging:
-				is_left_mouse_dragging = true
-			else:
-				is_left_mouse_dragging = false
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			player_mouse_action(event, true, true)
+			is_right_mouse_dragging = false
 		
 		# Right click to move
-		if event.button_index == MOUSE_BUTTON_RIGHT and not is_left_mouse_dragging:
+		if event.button_index == MOUSE_BUTTON_RIGHT:
 			# Start dragging
 			player_mouse_action(event, not is_right_mouse_dragging) # For single clicks
 
@@ -78,6 +78,7 @@ func _input(event):
 				is_right_mouse_dragging = true
 			else:
 				is_right_mouse_dragging = false
+
 
 		# if event.button_index == MOUSE_BUTTON_MIDDLE:
 		# 	if event.pressed:
@@ -87,13 +88,13 @@ func _input(event):
 		# 		is_middle_mouse_dragging = false
 		
 		# Stop dragging if mouse is released
+		if not event.is_pressed:
+			is_middle_mouse_dragging = false
+			is_right_mouse_dragging = false
+		
 		return
 	
 	if event is InputEventMouseMotion:
-		if is_left_mouse_dragging:
-			player_mouse_action(event, false, true)
-			return
-		
 		if is_right_mouse_dragging:
 			player_mouse_action(event, false)
 			return
@@ -233,15 +234,23 @@ func _process(delta):
 	if Config.is_dedicated_server : return
 
 	# Handle the gamepad and touch movement input
-	var movement_delta = Vector3()
+	var movement_delta = Vector2()
 
-	movement_delta.x += Input.get_action_strength("character_move_right") - Input.get_action_strength("character_move_left")
-	movement_delta.z += Input.get_action_strength("character_move_down") - Input.get_action_strength("character_move_up")
+	movement_delta = Input.get_vector(
+		"character_move_left", "character_move_right",
+		"character_move_up", "character_move_down",
+		Config.gamepad_deadzone
+	)
 
 	if not movement_delta.is_zero_approx():
-		var target_position = movement_delta * character.current_stats.movement_speed * delta + character.global_position
+		last_movement_gamepad = true
+		var movement_delta3 = Vector3(movement_delta.x, 0, movement_delta.y) * character.current_stats.movement_speed * delta
+		var target_position = movement_delta3 + character.global_position
 		_player_action_move(target_position)
-
+	else:
+		if last_movement_gamepad and character.get_current_state_name() == "Moving":
+			_player_action_move(character.global_position)
+	
 	# handle all the camera-related input
 	camera_movement_handler()
 	
@@ -301,7 +310,7 @@ func camera_movement_handler() -> void:
 	# Get Mouse Coords on screen
 	var current_mouse_position = get_viewport().get_mouse_position()
 	var size = get_viewport().get_visible_rect().size
-	var cam_delta = Vector3(0, 0, 0)
+	var cam_delta = Vector2(0, 0)
 	var edge_margin = Config.camera_settings.edge_margin
 	
 	# Check if there is a collision at the mouse position
@@ -317,22 +326,21 @@ func camera_movement_handler() -> void:
 		cam_delta.x += 1
 
 	if current_mouse_position.y <= edge_margin:
-		cam_delta.z -= 1
+		cam_delta.y -= 1
 	elif current_mouse_position.y >= size.y - edge_margin:
-		cam_delta.z += 1
+		cam_delta.y += 1
 	
 	# Keyboard input
-	cam_delta.x += Input.get_action_strength("camera_right") - Input.get_action_strength("camera_left")
-	cam_delta.z += Input.get_action_strength("camera_down") - Input.get_action_strength("camera_up")
+	cam_delta = Input.get_vector("camera_left", "camera_right", "camera_up", "camera_down")
 	
 	# Middle mouse dragging
 	if is_middle_mouse_dragging:
 		var mouse_delta = current_mouse_position - initial_mouse_position
-		cam_delta += Vector3(mouse_delta.x, 0, mouse_delta.y) * Config.camera_settings.cam_pan_sensitivity
+		cam_delta += Vector2(mouse_delta.x, mouse_delta.y) * Config.camera_settings.cam_pan_sensitivity
 	
 	# Apply camera movement
-	if cam_delta != Vector3.ZERO:
-		camera_target_position += cam_delta
+	if not cam_delta.is_zero_approx():
+		camera_target_position += Vector3(cam_delta.x, 0, cam_delta.y)
 
 
 func get_character(pid: int) -> Node:

@@ -9,6 +9,8 @@ signal camera_property_changed()
 @export var show_all_attack_ranges:bool = false
 @export var show_all_state_changes:bool = false
 
+@export var gamepad_deadzone: float = 0.1
+
 # the settings groups
 @export var camera_settings: CameraSettings
 @export var graphics_settings: GraphicsSettings
