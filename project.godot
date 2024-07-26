@@ -54,6 +54,9 @@ texture={
 "compress/mode": 3,
 "mipmaps/generate": true
 }
+scene={
+"gltf/embedded_image_handling": 0
+}
 
 [input]
 
