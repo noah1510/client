@@ -6,22 +6,20 @@ on:
       - 4.3_update
 
 env:
-    GODOT_VERSION: '4.3-rc1'
-    EXPORT_TEMPLATE_VERSION: '4.3.rc1'
-    GODOT_REPO: 'godotengine/godot-builds'
-    GODOT_CACHE_KEY: 'godot_4_3_0_rc1_rev2'
-    LIBGL_ALWAYS_SOFTWARE: true
-    GALLIUM_DRIVER: llvmpipe
+  GODOT_VERSION: '4.3-rc1'
+  EXPORT_TEMPLATE_VERSION: '4.3.rc1'
+  GODOT_REPO: 'godotengine/godot-builds'
+  GODOT_CACHE_KEY: 'godot_4_3_0_rc1_rev2'
     
 jobs:
   cache_godot:
     uses: ./.github/workflows/cache_godot.yaml
     secrets: inherit
     with:
-      GODOT_VERSION: ${{ env.GODOT_VERSION }}
-      EXPORT_TEMPLATE_VERSION: ${{ env.EXPORT_TEMPLATE_VERSION }}
-      GODOT_CACHE_KEY: ${{ env.GODOT_CACHE_KEY }}
-      GODOT_REPO: ${{ env.GODOT_REPO }}
+      GODOT_VERSION: "${{ env.GODOT_VERSION }}"
+      EXPORT_TEMPLATE_VERSION: "${{ env.EXPORT_TEMPLATE_VERSION }}"
+      GODOT_CACHE_KEY: "${{ env.GODOT_CACHE_KEY }}"
+      GODOT_REPO: "${{ env.GODOT_REPO }}"
   
   compile_extensions:
     needs: cache_godot
@@ -33,8 +31,8 @@ jobs:
     uses: ./.github/workflows/export_game.yaml
     secrets: inherit
     with:
-      EXPORT_TEMPLATE_VERSION: ${{ env.EXPORT_TEMPLATE_VERSION }}
-      GODOT_CACHE_KEY: ${{ env.GODOT_CACHE_KEY }}
+      EXPORT_TEMPLATE_VERSION: "${{ env.EXPORT_TEMPLATE_VERSION }}"
+      GODOT_CACHE_KEY: "${{ env.GODOT_CACHE_KEY }}"
 
   create_release:
     needs: [ export_game ]
