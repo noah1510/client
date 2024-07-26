@@ -87,6 +87,15 @@ if __name__ == "__main__":
         default="-GNinja",
         help="The build system cmake should use under the hood (default: -GNinja)"
     )
+    
+    parser.add_argument(
+        "--skip_setup",
+        action='store_true',
+        required=False,
+        default=False,
+        dest='skip_setup',
+        help="Skip the cmake setup process"
+    )
 
     args = vars(parser.parse_args())
     print(args)
@@ -116,17 +125,18 @@ if __name__ == "__main__":
     os.makedirs(build_dir, exist_ok=True)
 
     # Run the setup command
-    setup_command = [
-        *cmake_command,
-        "-DCMAKE_BUILD_TYPE={}".format(args["build_mode"].capitalize()),
-        "-DGODOT_GDEXTENSION_API_FILE={}".format(args["api_file"]),
-        "-B", build_dir,
-        args["build_system"],
-        "extensions"
-    ]
-    if subprocess.call(setup_command, cwd=project_dir) != 0:
-        print("Failed to run the setup command")
-        exit(1)
+    if not args['skip_setup']:
+        setup_command = [
+            *cmake_command,
+            "-DCMAKE_BUILD_TYPE={}".format(args["build_mode"].capitalize()),
+            "-DGODOT_GDEXTENSION_API_FILE={}".format(args["api_file"]),
+            "-B", build_dir,
+            args["build_system"],
+            "extensions"
+        ]
+        if subprocess.call(setup_command, cwd=project_dir) != 0:
+            print("Failed to run the setup command")
+            exit(1)
 
     # Compile the source file
     compile_command = [*cmake_command, "--build", build_dir]

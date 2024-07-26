@@ -41,14 +41,13 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: git submodule update --init --recursive
 
-      - name: get the api artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: gd_extension_api
-          path: .
+      - name: Compile the extension (with setup)
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: python ./extensions/scripts/compile.py --target_arch=${{ matrix.arch }} --build_dir=extensions/build --mode=${{ matrix.build_mode }}
 
-      - name: Compile the extension
-        run: python ./extensions/scripts/compile.py --target_arch=${{ matrix.arch }} --build_dir=extensions/build --mode=${{ matrix.build_mode }} --api_file=./extension_api.json
+      - name: Compile the extension (without setup)
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: python ./extensions/scripts/compile.py --target_arch=${{ matrix.arch }} --build_dir=extensions/build --mode=${{ matrix.build_mode }} --skip_setup
 
       - name: Upload extension artifacts
         uses: actions/upload-artifact@v4

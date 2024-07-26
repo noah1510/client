@@ -46,6 +46,7 @@ jobs:
     env:
       LIBGL_ALWAYS_SOFTWARE: true
       GALLIUM_DRIVER: llvmpipe
+      DISPLAY: :1
 
     steps:
       - uses: actions/checkout@v4
@@ -73,11 +74,15 @@ jobs:
         with:
           name: extensions
           path: bin
-          
+        
+      - name: install lavapipe
+        if: runner.os == 'Linux'
+        uses: serenity4/julia-lavapipe@v1
+    
       - name: Setup display drivers (linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get install -y mesa-utils xvfb
-
+        run: Xvfb :1 -screen 0 1600x1200x24 &
+          
       - name: Create templates symlink (linux)
         if: runner.os == 'Linux'
         run: |
@@ -102,12 +107,16 @@ jobs:
       - name: Import all assets
         run: ./godot/${{ matrix.godot_executable }} --headless --import project.godot
 
-      - name: Export Client For Linux amd64
+      - name: Export Client
         run: ./godot/${{ matrix.godot_executable }} --headless --export-release 'Client ${{ matrix.export_type }}' project.godot
 
-      - name: Export Server For Linux amd64
+      - name: Export Server
         run: ./godot/${{ matrix.godot_executable }} --headless --export-release 'Server ${{ matrix.export_type }}' project.godot
 
+      - name: Tear down xvfb
+        if: runner.os == 'Linux'
+        run: killall Xvfb
+        
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

@@ -67,14 +67,3 @@ jobs:
           unzip Godot_v${{ inputs.GODOT_VERSION }}_export_templates.tpz
           mkdir godot/export_templates
           mv templates godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }}
-
-      - name: generate api bindings
-        run: godot/godot_linux --headless --dump-extension-api --dump-gdextension-interface
-
-      - name: create an artifact with the api bindings
-        uses: actions/upload-artifact@v4
-        with:
-          name: gd_extension_api
-          path: |
-            extension_api.json
-            gdextension_interface.h
