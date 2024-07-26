@@ -11,10 +11,6 @@ on:
         type: string
 
 jobs:
-  env:
-    LIBGL_ALWAYS_SOFTWARE: true
-    GALLIUM_DRIVER: llvmpipe
-    
   export_game:
     strategy:
       fail-fast: false
@@ -47,6 +43,9 @@ jobs:
 
     name: "Export Game ${{ matrix.export_type }}"
     runs-on: ${{ matrix.os }}
+    env:
+      LIBGL_ALWAYS_SOFTWARE: true
+      GALLIUM_DRIVER: llvmpipe
 
     steps:
       - uses: actions/checkout@v4
