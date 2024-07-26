@@ -5,6 +5,15 @@ on:
       - alpha
       - 4.3_update
 
+
+env:
+    GODOT_VERSION: '4.3-rc1'
+    EXPORT_TEMPLATE_VERSION: '4.3.rc1'
+    GODOT_REPO: 'godotengine/godot-builds'
+    GODOT_CACHE_KEY: 'godot_4_3_0_rc1_rev2'
+    LIBGL_ALWAYS_SOFTWARE: true,
+    GALLIUM_DRIVER: llvmpipe
+    
 jobs:
   cache_godot:
     uses: ./.github/workflows/cache_godot.yaml

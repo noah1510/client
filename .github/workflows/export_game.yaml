@@ -3,8 +3,6 @@ on:
 
 jobs:
   export_game:
-    env:
-      EXPORT_TEMPLATE_VERSION: '4.3.rc1'
     strategy:
       fail-fast: false
       matrix:
@@ -56,13 +54,17 @@ jobs:
           path: godot
           enableCrossOsArchive: true
           fail-on-cache-miss: true
-          key: godot_4_3_0_rc1_rev2
+          key: ${{ env.GODOT_CACHE_KEY }}
 
       - name: Retreive extensions artifacts
         uses: actions/download-artifact@v4
         with:
           name: extensions
           path: bin
+          
+      - name: Setup display drivers (linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y mesa-utils xvfb
 
       - name: Create templates symlink (linux)
         if: runner.os == 'Linux'

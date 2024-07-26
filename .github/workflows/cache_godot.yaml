@@ -5,16 +5,13 @@ jobs:
   cache_godot:
     name: "Setup Godot Cache"
     runs-on: "ubuntu-24.04"
-    env:
-      GODOT_VERSION: '4.3-rc1'
-      GODOT_REPO: 'godotengine/godot-builds'
     steps:
       - uses: actions/cache@v4
         id: cache
         with:
           path: godot
           enableCrossOsArchive: true
-          key: godot_4_3_0_rc1_rev2
+          key: ${{ env.GODOT_CACHE_KEY }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -52,13 +49,15 @@ jobs:
           wget https://github.com/${{ env.GODOT_REPO }}/releases/download/${{ env.GODOT_VERSION }}/Godot_v${{ env.GODOT_VERSION }}_export_templates.tpz
           unzip Godot_v${{ env.GODOT_VERSION }}_export_templates.tpz
           mkdir godot/export_templates
-          mv templates godot/export_templates/4.3.rc1
+          mv templates godot/export_templates/${{ env.EXPORT_TEMPLATE_VERSION }}
 
       - name: generate api bindings
-        run: godot/godot_linux --headless --dump-extension-api extension_api.json
+        run: godot/godot_linux --headless --dump-extension-api --dump-gdextension-interface
 
       - name: create an artifact with the api bindings
         uses: actions/upload-artifact@v4
         with:
           name: gd_extension_api
-          path: extension_api.json
+          path: |
+            extension_api.json
+            gdextension_interface.h

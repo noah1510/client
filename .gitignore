@@ -10,6 +10,7 @@ android/
 *.zip
 lang/*.translation
 .vscode/
+.cache
 
 # exports
 build/
