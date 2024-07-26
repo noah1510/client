@@ -1,5 +1,14 @@
 on:
   workflow_call:
+    input:
+      EXPORT_TEMPLATE_VERSION:
+        description: 'The godot export template version string'
+        required: true
+        type: string
+      GODOT_CACHE_KEY:
+        description: 'The cache key for the godot installation'
+        required: true
+        type: string
 
 jobs:
   export_game:
@@ -54,7 +63,7 @@ jobs:
           path: godot
           enableCrossOsArchive: true
           fail-on-cache-miss: true
-          key: ${{ env.GODOT_CACHE_KEY }}
+          key: ${{ inputs.GODOT_CACHE_KEY }}
 
       - name: Retreive extensions artifacts
         uses: actions/download-artifact@v4
@@ -70,19 +79,19 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           mkdir -p ~/.local/share/godot/export_templates
-          ln -s $(pwd)/godot/export_templates/${{ env.EXPORT_TEMPLATE_VERSION }} ~/.local/share/godot/export_templates/${{ env.EXPORT_TEMPLATE_VERSION }}
+          ln -s $(pwd)/godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }} ~/.local/share/godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }}
 
       - name: Create templates symlink (macos)
         if: runner.os == 'macOS'
         run: |
           mkdir -p "$HOME/Library/Application Support/Godot/export_templates"
-          ln -s "$(pwd)/godot/export_templates/${{ env.EXPORT_TEMPLATE_VERSION }}" "$HOME/Library/Application Support/Godot/export_templates/${{ env.EXPORT_TEMPLATE_VERSION }}"
+          ln -s "$(pwd)/godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }}" "$HOME/Library/Application Support/Godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }}"
 
       - name: Move the export templates (windows)
         if: runner.os == 'Windows'
         run: |
           New-Item -ItemType Directory -Path $env:APPDATA/Godot/export_templates -Force
-          Move-Item -Path godot/export_templates/${{ env.EXPORT_TEMPLATE_VERSION }} -Destination $env:APPDATA/Godot/export_templates/
+          Move-Item -Path godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }} -Destination $env:APPDATA/Godot/export_templates/
 
       - name: Create the build directory
         run: mkdir build
