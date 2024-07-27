@@ -46,7 +46,7 @@ jobs:
     env:
       LIBGL_ALWAYS_SOFTWARE: true
       GALLIUM_DRIVER: llvmpipe
-      DISPLAY: :1
+      DISPLAY: ":42"
 
     steps:
       - uses: actions/checkout@v4
@@ -74,15 +74,7 @@ jobs:
         with:
           name: extensions
           path: bin
-        
-      - name: install lavapipe
-        if: runner.os == 'Linux'
-        uses: serenity4/julia-lavapipe@v1
-    
-      - name: Setup display drivers (linux)
-        if: runner.os == 'Linux'
-        run: Xvfb :1 -screen 0 1600x1200x24 &
-          
+
       - name: Create templates symlink (linux)
         if: runner.os == 'Linux'
         run: |
@@ -100,7 +92,15 @@ jobs:
         run: |
           New-Item -ItemType Directory -Path $env:APPDATA/Godot/export_templates -Force
           Move-Item -Path godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }} -Destination $env:APPDATA/Godot/export_templates/
-
+      
+      - name: install lavapipe
+        if: runner.os == 'Linux'
+        uses: serenity4/julia-lavapipe@v1
+    
+      - name: Setup display drivers (Linux and mac)
+        if: runner.os != 'windows-latest'
+        run: Xvfb :42 -screen 0 1280x720x24 &
+      
       - name: Create the build directory
         run: mkdir build
 
@@ -113,8 +113,9 @@ jobs:
       - name: Export Server
         run: ./godot/${{ matrix.godot_executable }} --headless --export-release 'Server ${{ matrix.export_type }}' project.godot
 
-      - name: Tear down xvfb
-        if: runner.os == 'Linux'
+      - name: Tear down xvfb (Linux and Mac) 
+        continue-on-error: true
+        if: runner.os != 'windows-latest'
         run: killall Xvfb
         
       - name: Upload build artifacts
