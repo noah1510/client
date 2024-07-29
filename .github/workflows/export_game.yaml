@@ -1,12 +1,12 @@
 on:
   workflow_call:
     inputs:
-      EXPORT_TEMPLATE_VERSION:
-        description: 'The godot export template version string'
+      GODOT_VERSION:
+        description: 'The godot version string'
         required: true
         type: string
-      GODOT_CACHE_KEY:
-        description: 'The cache key for the godot installation'
+      GODOT_REPO:
+        description: 'The repository to download godot from'
         required: true
         type: string
 
@@ -23,22 +23,18 @@ jobs:
         include:
           - export_type: macOS
             os: macos-latest
-            godot_executable: "Godot.app/Contents/MacOS/Godot"
             name: "macos"
 
           - export_type: "Windows (amd64)"
             os: windows-latest
-            godot_executable: "godot_win64_console.exe"
             name: "windows"
 
           - export_type: "Linux (amd64)"
             os: ubuntu-24.04
-            godot_executable: "godot_linux"
             name: "linux_amd64"
 
           - export_type: "Linux (arm64)"
             os: ubuntu-24.04
-            godot_executable: "godot_linux"
             name: "linux_aarch64"
 
     name: "Export Game ${{ matrix.export_type }}"
@@ -55,43 +51,23 @@ jobs:
         with:
           python-version: '3.12'
 
+      - uses: ./.github/actions/setup_godot
+        id: setup_godot
+        with:
+          GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
+          GODOT_REPO: ${{ inputs.GODOT_REPO }}
+
       - name: get submodules
         run: git submodule update --init --recursive
 
       - name: Generate default_asset manifest files
         run: python default_assets/manifests.py
 
-      - uses: actions/cache@v4
-        id: cache
-        with:
-          path: godot
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-          key: ${{ inputs.GODOT_CACHE_KEY }}
-
       - name: Retreive extensions artifacts
         uses: actions/download-artifact@v4
         with:
           name: extensions
           path: bin
-
-      - name: Create templates symlink (linux)
-        if: runner.os == 'Linux'
-        run: |
-          mkdir -p ~/.local/share/godot/export_templates
-          ln -s $(pwd)/godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }} ~/.local/share/godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }}
-
-      - name: Create templates symlink (macos)
-        if: runner.os == 'macOS'
-        run: |
-          mkdir -p "$HOME/Library/Application Support/Godot/export_templates"
-          ln -s "$(pwd)/godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }}" "$HOME/Library/Application Support/Godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }}"
-
-      - name: Move the export templates (windows)
-        if: runner.os == 'Windows'
-        run: |
-          New-Item -ItemType Directory -Path $env:APPDATA/Godot/export_templates -Force
-          Move-Item -Path godot/export_templates/${{ inputs.EXPORT_TEMPLATE_VERSION }} -Destination $env:APPDATA/Godot/export_templates/
       
       - name: install lavapipe
         if: runner.os == 'Linux'
@@ -105,13 +81,13 @@ jobs:
         run: mkdir build
 
       - name: Import all assets
-        run: ./godot/${{ matrix.godot_executable }} --headless --import project.godot
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --import project.godot
 
       - name: Export Client
-        run: ./godot/${{ matrix.godot_executable }} --headless --export-release 'Client ${{ matrix.export_type }}' project.godot
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Client ${{ matrix.export_type }}' project.godot
 
       - name: Export Server
-        run: ./godot/${{ matrix.godot_executable }} --headless --export-release 'Server ${{ matrix.export_type }}' project.godot
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Server ${{ matrix.export_type }}' project.godot
 
       - name: Tear down xvfb (Linux and Mac) 
         continue-on-error: true

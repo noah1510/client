@@ -6,27 +6,17 @@ on:
       - 4.3_update
 
 jobs:
-  cache_godot:
-    uses: ./.github/workflows/cache_godot.yaml
-    secrets: inherit
-    with:
-      GODOT_VERSION: '4.3-rc1'
-      EXPORT_TEMPLATE_VERSION: '4.3.rc1'
-      GODOT_CACHE_KEY: 'godot_4_3_0_rc1_rev2'
-      GODOT_REPO: 'godotengine/godot-builds'
-  
   compile_extensions:
-    needs: cache_godot
     uses: ./.github/workflows/compile_extension.yaml
     secrets: inherit
 
   export_game:
-    needs: [ cache_godot, compile_extensions ]
+    needs: compile_extensions
     uses: ./.github/workflows/export_game.yaml
     secrets: inherit
     with:
-      EXPORT_TEMPLATE_VERSION: '4.3.rc1'
-      GODOT_CACHE_KEY: 'godot_4_3_0_rc1_rev2'
+      GODOT_VERSION: '4.3-rc1'
+      GODOT_REPO: 'https://github.com/godotengine/godot-builds'
 
   create_release:
     needs: [ export_game ]
