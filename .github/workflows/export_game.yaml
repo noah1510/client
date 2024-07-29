@@ -46,6 +46,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
 
       - uses: actions/setup-python@v5
         with:
@@ -56,9 +58,6 @@ jobs:
         with:
           GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
           GODOT_REPO: ${{ inputs.GODOT_REPO }}
-
-      - name: get submodules
-        run: git submodule update --init --recursive
 
       - name: Generate default_asset manifest files
         run: python default_assets/manifests.py

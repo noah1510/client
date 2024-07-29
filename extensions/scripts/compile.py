@@ -3,6 +3,7 @@ import os
 import platform
 import subprocess
 import stat
+import shutil
 
 from typing import List
 
@@ -58,13 +59,6 @@ if __name__ == "__main__":
         help="The compilation mode (default: debug)",
         dest="build_mode"
     )
-
-    parser.add_argument(
-        "--api_file",
-        type=str,
-        default=default_api_file,
-        help="The API file to use (default: {})".format(default_api_file)
-    )
     
     parser.add_argument(
         "--target_arch",
@@ -89,6 +83,14 @@ if __name__ == "__main__":
     )
     
     parser.add_argument(
+        "--set_linker",
+        type=str,
+        required=False,
+        default="",
+        help="The linker to use (default: empty, tries to use mold if installed)"
+    )
+
+    parser.add_argument(
         "--skip_setup",
         action='store_true',
         required=False,
@@ -102,7 +104,13 @@ if __name__ == "__main__":
 
     cmake_command: List[str] = []
 
-    if args["target_arch"] == "native":
+    linker = args["set_linker"]
+    if linker == "":
+        if shutil.which("mold"):
+            linker = "MOLD"
+
+    native_build = args["target_arch"] == "native"
+    if native_build:
         args["target_arch"] = host_arch
 
     if host_arch == args["target_arch"]:
@@ -122,31 +130,49 @@ if __name__ == "__main__":
     if args["build_dir"]:
         build_dir = args["build_dir"]
 
+    if native_build:
+        build_dir = os.path.abspath(build_dir)
+
+    if os.path.exists(build_dir):
+        print("Build directory already exists.")
+
     os.makedirs(build_dir, exist_ok=True)
+
+    # prepare the environment
+    if linker:
+        print("Using linker: {}".format(linker))
+        os.environ["CMAKE_LINKER_TYPE"] = linker
+
+    # set the ccache dir to a subdir of build_dir
+    ccache_cache_dir = os.path.join(build_dir, ".ccache")
+    os.makedirs(ccache_cache_dir, exist_ok=True)
+    os.environ["CCACHE_DIR"] = ccache_cache_dir
 
     # Run the setup command
     if not args['skip_setup']:
         setup_command = [
             *cmake_command,
             "-DCMAKE_BUILD_TYPE={}".format(args["build_mode"].capitalize()),
-            "-DGODOT_GDEXTENSION_API_FILE={}".format(args["api_file"]),
             "-B", build_dir,
             args["build_system"],
             "extensions"
         ]
-        if subprocess.call(setup_command, cwd=project_dir) != 0:
+        setup_output = subprocess.run(setup_command, cwd=project_dir, check=True)
+        if setup_output.returncode != 0:
             print("Failed to run the setup command")
             exit(1)
 
     # Compile the source file
     compile_command = [*cmake_command, "--build", build_dir]
-    if subprocess.call(compile_command, cwd=project_dir) != 0:
+    compile_output = subprocess.run(compile_command, cwd=project_dir, check=True)
+    if compile_output.returncode != 0:
         print("Failed to run the compile command")
         exit(1)
 
     # install the build output
     install_command = [*cmake_command, "--install", build_dir]
-    if subprocess.call(install_command, cwd=project_dir) != 0:
+    install_output = subprocess.run(install_command, cwd=project_dir, check=True)
+    if install_output.returncode != 0:
         print("Failed to install the build output")
         exit(1)
     
