@@ -1,0 +1,17 @@
+name: 'Setup Headless Display Server'
+description: 'Setup a headless display server for running gui programs in a headless environment'
+
+runs:
+  using: "composite"
+  steps:
+    
+    - name: install lavapipe
+      if: runner.os == 'Linux'
+      uses: serenity4/julia-lavapipe@v1
+
+    - uses: ./.github/actions/with_post_step
+      if: runner.os != 'windows-latest'
+      id: setup_godot
+      with:
+        main: bash ./.github/actions/setup_headless_display/xvfb_launch.sh
+        post: bash ./.github/actions/setup_headless_display/xvfb_kill.sh
