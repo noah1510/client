@@ -19,18 +19,18 @@ void register_openchamp_types() {
 }
 
 void initialize_openchamp_module(ModuleInitializationLevel p_level) {
-	if (p_level == MODULE_INITIALIZATION_LEVEL_CORE) {
+	switch (p_level) {
+	case MODULE_INITIALIZATION_LEVEL_CORE:
 		register_openchamp_types();
-	}
+		return;
+	case MODULE_INITIALIZATION_LEVEL_SCENE:
+		Engine::get_singleton()->register_singleton("AssetIndexer", DynamicAssetIndexer::get_singleton());
+		Engine::get_singleton()->register_singleton("DataCache", DataCacheManager::get_singleton());
 
-	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
+		DynamicAssetIndexer::get_singleton()->index_files();
+		DataCacheManager::get_singleton()->index_files();
 		return;
 	}
-
-	//register_openchamp_types();
-
-	Engine::get_singleton()->register_singleton("AssetIndexer", DynamicAssetIndexer::get_singleton());
-	Engine::get_singleton()->register_singleton("DataCache", DataCacheManager::get_singleton());
 }
 
 
