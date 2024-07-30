@@ -10,7 +10,7 @@ runs:
       uses: serenity4/julia-lavapipe@v1
 
     - uses: ./.github/actions/with_post_step
-      if: runner.os != 'windows-latest'
+      if: runner.os != 'Windows'
       id: setup_godot
       with:
         main: bash ./.github/actions/setup_headless_display/xvfb_launch.sh
