@@ -13,20 +13,21 @@ def get_dirs(version_string):
     export_template_dir = ""
     godot_program_subdir = ""
     godot_console_subdir = ""
+    template_version_string = version_string.replace("-", ".")
     match sys.platform:
         case "linux":
             system_type = "linux.x86_64"
-            export_template_dir = f"~/.local/share/godot/export_templates/{version_string}"
+            export_template_dir = f"~/.local/share/godot/export_templates/{template_version_string}"
             godot_program_subdir = f"Godot_v{version_string}_linux.x86_64"
             godot_console_subdir = godot_program_subdir
         case "win32" | "cygwin":
             system_type = "win64.exe"
-            export_template_dir = f"{os.getenv('APPDATA')}/Godot/templates/{version_string}"
+            export_template_dir = f"{os.getenv('APPDATA')}/Godot/templates/{template_version_string}"
             godot_program_subdir = f"Godot_v{version_string}_win64.exe"
             godot_console_subdir = f"Godot_v{version_string}_win64_console.exe"
         case "darwin":
             system_type = "macos.universal"
-            export_template_dir = f"~/Library/Application Support/Godot/templates/{version_string}"
+            export_template_dir = f"~/Library/Application Support/Godot/export_templates/{template_version_string}"
             godot_program_subdir = f"Godot.app/Contents/MacOS/Godot"
             godot_console_subdir = godot_program_subdir
         case _:

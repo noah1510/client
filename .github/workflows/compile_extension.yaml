@@ -31,8 +31,9 @@ jobs:
         id: cache
         with:
           path: extensions/build
-          save-always: true
-          key: extension_cache_${{ matrix.os }}_${{ matrix.build_mode }}_${{ matrix.arch }}_4_3_0_rc1_rev4
+          key: extension_cache_${{ matrix.os }}_${{ matrix.build_mode }}_${{ matrix.arch }}_4_3_0_rc1-${{ github.run_id }}
+          restore-keys: |
+            extension_cache_${{ matrix.os }}_${{ matrix.build_mode }}_${{ matrix.arch }}_4_3_0_rc1
 
       - name: install build deps (linux)
         if: matrix.os == 'ubuntu-24.04'
