@@ -73,6 +73,15 @@ def main(args):
     with zipfile.ZipFile(godot_templates_zip, "r") as zip_ref:
         zip_ref.extractall(export_template_dir)
 
+    # all the export templates are in the templates subdir. Move them to the root
+    templates_subdir = os.path.join(export_template_dir, "templates")
+    for file in os.listdir(templates_subdir):
+        os.rename(os.path.join(templates_subdir, file), os.path.join(export_template_dir, file))
+
+    # remove the zip file
+    os.remove(godot_templates_zip)
+
+
 
 if __name__ == "__main__":
     # change to the project root, which is the dir of this file
