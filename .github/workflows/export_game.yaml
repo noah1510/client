@@ -68,13 +68,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: extensions
-          path: bin   
+          path: bin
       
       - name: Create the build directory
         run: mkdir build
 
       - name: Import all assets
-        continue-on-error: true
         run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --import project.godot
 
       - name: Export Client
