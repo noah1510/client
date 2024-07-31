@@ -1,0 +1,141 @@
+on:
+  workflow_call:
+    inputs:
+      GODOT_VERSION:
+        description: 'The godot version string'
+        required: true
+        type: string
+      GODOT_REPO:
+        description: 'The repository to download godot from'
+        required: true
+        type: string
+      GAME_EXPORT_NAME:
+        description: 'The name of the export'
+        required: true
+        type: string
+      GAME_ARTIFACT_NAME:
+        description: 'The name of the artifact to upload'
+        required: true
+        type: string
+      EXTENSIONS_ARCHITECTURE:
+        description: 'The architecture to build the extensions for'
+        required: true
+        type: string
+      BUILD_OS:
+        description: 'The OS to build the extension on'
+        required: true
+        type: string
+
+jobs:
+  compile_extensions:
+    strategy:
+      fail-fast: false
+      matrix:
+        build_mode: [ debug, release ]
+    
+    name: "Compile Extensions ${{ inputs.BUILD_OS }} ${{ matrix.build_mode }}"
+    runs-on: ${{ inputs.BUILD_OS }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+    
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: extensions/build
+          key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
+          restore-keys: |
+            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
+            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+
+      - name: install build deps (linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y mold ccache ninja-build
+
+      - name: install build deps (macos)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ccache
+          brew install mold
+          brew install ninja
+
+      - name: install build deps (windows)
+        if: runner.os == 'Windows'
+        run: |
+          python -m pip install ninja
+          choco install -y ccache
+
+      - name: Compile the extension
+        run: python ./extensions/scripts/compile.py --target_arch=${{ inputs.EXTENSIONS_ARCHITECTURE }} --build_dir=extensions/build --mode=${{ matrix.build_mode }}
+
+      - name: Upload extension artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+          path: |
+            bin/*.dll
+            bin/*.dll.a
+            bin/*.dylib
+            bin/**.framework
+            bin/*.so
+
+
+  export_game:
+    name: "Export Game ${{ inputs.GAME_EXPORT_NAME }}"
+    runs-on: ${{ inputs.BUILD_OS }}
+    needs: compile_extensions
+    env:
+      LIBGL_ALWAYS_SOFTWARE: true
+      GALLIUM_DRIVER: llvmpipe
+      DISPLAY: ":42"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: ./.github/actions/setup_godot
+        id: setup_godot
+        with:
+          GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
+          GODOT_REPO: ${{ inputs.GODOT_REPO }}
+
+      - uses: ./.github/actions/setup_headless_display
+
+      - name: Generate default_asset manifest files
+        run: python default_assets/manifests.py
+
+      - name: Retreive extensions artifacts (debug)
+        uses: actions/download-artifact@v4
+        with:
+          name: extension_${{ runner.os }}_debug_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+          path: bin
+
+      - name: Retreive extensions artifacts (release)
+        uses: actions/download-artifact@v4
+        with:
+          name: extension_${{ runner.os }}_release_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+          path: bin
+      
+      - name: Create the build directory
+        run: mkdir build
+
+      - name: Import all assets
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --import project.godot
+
+      - name: Export Client
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Client ${{ inputs.GAME_EXPORT_NAME }}' project.godot
+
+      - name: Export Server
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: game_export_${{ inputs.GAME_ARTIFACT_NAME }}
+          path: build

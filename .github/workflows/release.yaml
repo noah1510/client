@@ -6,20 +6,16 @@ on:
       - 4.3_update
 
 jobs:
-  compile_extensions:
-    uses: ./.github/workflows/compile_extension.yaml
-    secrets: inherit
-
-  export_game:
+  compile_and_export_game:
     needs: compile_extensions
-    uses: ./.github/workflows/export_game.yaml
+    uses: ./.github/workflows/compile_and_export_all.yaml
     secrets: inherit
     with:
       GODOT_VERSION: '4.3-rc1'
       GODOT_REPO: 'https://github.com/godotengine/godot-builds'
 
   create_release:
-    needs: [ export_game ]
+    needs: [ compile_and_export_game ]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4

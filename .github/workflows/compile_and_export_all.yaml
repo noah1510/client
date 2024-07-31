@@ -24,69 +24,56 @@ jobs:
           - export_type: macOS
             os: macos-latest
             name: "macos"
+            arch: native
 
           - export_type: "Windows (amd64)"
             os: windows-latest
             name: "windows"
+            arch: native
 
           - export_type: "Linux (amd64)"
             os: ubuntu-24.04
             name: "linux_amd64"
+            arch: native
 
           - export_type: "Linux (arm64)"
             os: ubuntu-24.04
             name: "linux_aarch64"
+            arch: aarch64
 
-    name: "Export Game ${{ matrix.export_type }}"
-    runs-on: ${{ matrix.os }}
-    env:
-      LIBGL_ALWAYS_SOFTWARE: true
-      GALLIUM_DRIVER: llvmpipe
-      DISPLAY: ":42"
+    uses: ./.github/workflows/compile_and_export.yaml
+    secrets: inherit
+    with:
+      GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
+      GODOT_REPO: ${{ inputs.GODOT_REPO }}
+      GAME_EXPORT_NAME: ${{ matrix.export_type }}
+      GAME_ARTIFACT_NAME: ${{ matrix.name }}
+      BUILD_OS: ${{ matrix.os }}
+      EXTENSIONS_ARCHITECTURE: ${{ matrix.arch }}
 
+
+  combine_extension_artifacts:
+    name: "Combine Extension Binaries"
+    runs-on: "ubuntu-24.04"
+    needs: export_game
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - uses: ./.github/actions/setup_godot
-        id: setup_godot
-        with:
-          GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
-          GODOT_REPO: ${{ inputs.GODOT_REPO }}
-
-      - uses: ./.github/actions/setup_headless_display
-
-      - name: Generate default_asset manifest files
-        run: python default_assets/manifests.py
-
-      - name: Retreive extensions artifacts
+      - name: Retrieve extension artifacts
         uses: actions/download-artifact@v4
+        with:
+          pattern: extension_*
+          path: _bin
+
+      - name: Combine extension artifacts
+        run: |
+          mkdir -p bin
+          cp _bin/*/* bin
+
+      - name: Publish extension artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: extensions
           path: bin
-      
-      - name: Create the build directory
-        run: mkdir build
 
-      - name: Import all assets
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --import project.godot
-
-      - name: Export Client
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Client ${{ matrix.export_type }}' project.godot
-
-      - name: Export Server
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Server ${{ matrix.export_type }}' project.godot
-        
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: game_export_${{ matrix.name }}
-          path: build
 
   combine_export_artifacts:
     name: "Combine Export Binaries"
