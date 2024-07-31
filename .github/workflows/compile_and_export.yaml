@@ -32,9 +32,6 @@ jobs:
     secrets: inherit
     with:
       GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
-      GODOT_REPO: ${{ inputs.GODOT_REPO }}
-      GAME_EXPORT_NAME: ${{ inputs.GAME_EXPORT_NAME }}
-      GAME_ARTIFACT_NAME: ${{ inputs.GAME_ARTIFACT_NAME }}
       BUILD_OS: ${{ inputs.BUILD_OS }}
       EXTENSIONS_ARCHITECTURE: ${{ inputs.EXTENSIONS_ARCHITECTURE }}
 
