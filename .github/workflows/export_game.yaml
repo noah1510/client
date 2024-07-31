@@ -86,13 +86,13 @@ jobs:
         run: mkdir build
 
       - name: Import all assets
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --import project.godot
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --import project.godot
 
       - name: Export Client
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Client ${{ inputs.GAME_EXPORT_NAME }}' project.godot
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --export-release 'Client ${{ inputs.GAME_EXPORT_NAME }}' project.godot
 
       - name: Export Server
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
+        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
         
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
