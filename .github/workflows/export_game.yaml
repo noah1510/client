@@ -33,6 +33,7 @@ jobs:
     env:
       LIBGL_ALWAYS_SOFTWARE: true
       GALLIUM_DRIVER: llvmpipe
+      MESA_VK_DEVICE_SELECT: llvmpipe
       DISPLAY: ":42"
 
     steps:
