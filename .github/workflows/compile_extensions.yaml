@@ -13,15 +13,26 @@ on:
         description: 'The OS to build the extension on'
         required: true
         type: string
+      SEQUENTIAL_COMPILES:
+        description: 'Whether to compile extensions sequentially'
+        required: true
+        type: boolean
+      COMPILE_THREADS:
+        description: 'The number of threads to use for compilation'
+        required: false
+        type: number
+        default: 0
 
 jobs:
-  compile_extensions:
+  compile_extensions_parallel:
+    if: ${{ inputs.SEQUENTIAL_COMPILES == false }}
+
     strategy:
       fail-fast: false
       matrix:
         build_mode: [ debug, release ]
     
-    name: "Compile Extensions ${{ inputs.BUILD_OS }} ${{ matrix.build_mode }}"
+    name: "Parallel Compile Extensions ${{ inputs.BUILD_OS }} ${{ matrix.build_mode }}"
     runs-on: ${{ inputs.BUILD_OS }}
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +50,9 @@ jobs:
 
       - name: install build deps (linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get install -y mold ccache ninja-build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mold ccache ninja-build cmake
 
       - name: install build deps (macos)
         if: runner.os == 'macOS'
@@ -55,12 +68,66 @@ jobs:
           choco install -y ccache
 
       - name: Compile the extension
-        run: python ./extensions/scripts/compile.py --target_arch=${{ inputs.EXTENSIONS_ARCHITECTURE }} --build_dir=extensions/build --mode=${{ matrix.build_mode }}
+        run: python ./extensions/scripts/compile.py --target_arch=${{ inputs.EXTENSIONS_ARCHITECTURE }} --build_dir=extensions/build --mode=${{ matrix.build_mode }} --threads=${{ inputs.COMPILE_THREADS }}
 
       - name: Upload extension artifacts
         uses: actions/upload-artifact@v4
         with:
           name: extension_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+          path: |
+            bin/*.dll
+            bin/*.dll.a
+            bin/*.dylib
+            bin/**.framework
+            bin/*.so
+
+  compile_extensions_sequential:
+    if: ${{ inputs.SEQUENTIAL_COMPILES == true }}
+    name: "Sequential Compile Extensions ${{ inputs.BUILD_OS }}"
+    runs-on: ${{ inputs.BUILD_OS }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+    
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: extensions/build
+          key: extension_cache_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
+          restore-keys: |
+            extension_cache_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
+            extension_cache_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+
+      - name: install build deps (linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mold ccache ninja-build cmake
+
+      - name: install build deps (macos)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ccache
+          brew install mold
+          brew install ninja
+
+      - name: install build deps (windows)
+        if: runner.os == 'Windows'
+        run: |
+          python -m pip install ninja
+          choco install -y ccache
+
+      - name: Compile the extension (debug)
+        run: python ./extensions/scripts/compile.py --target_arch=${{ inputs.EXTENSIONS_ARCHITECTURE }} --build_dir=extensions/build/debug --mode=debug --threads=${{ inputs.COMPILE_THREADS }}
+      
+      - name: Compile the extension (release)
+        run: python ./extensions/scripts/compile.py --target_arch=${{ inputs.EXTENSIONS_ARCHITECTURE }} --build_dir=extensions/build/release --mode=release --threads=${{ inputs.COMPILE_THREADS }}
+
+      - name: Upload extension artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: extension_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}
           path: |
             bin/*.dll
             bin/*.dll.a

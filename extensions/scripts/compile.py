@@ -99,6 +99,15 @@ if __name__ == "__main__":
         help="Skip the cmake setup process"
     )
 
+    parser.add_argument(
+        "-j", "--jobs", "--threads",
+        type=int,
+        required=False,
+        default=0,
+        dest="jobs",
+        help="The number of threads to use for compilation (default: 0, auto)"
+    )
+
     args = vars(parser.parse_args())
     print(args)
 
@@ -147,6 +156,7 @@ if __name__ == "__main__":
     ccache_cache_dir = os.path.join(build_dir, ".ccache")
     os.makedirs(ccache_cache_dir, exist_ok=True)
     os.environ["CCACHE_DIR"] = ccache_cache_dir
+    os.environ["CCACHE_SLOPPINESS"] = "locale,time_macros,include_file_ctime,include_file_mtime"
 
     # Run the setup command
     if not args['skip_setup']:
@@ -164,6 +174,9 @@ if __name__ == "__main__":
 
     # Compile the source file
     compile_command = [*cmake_command, "--build", build_dir]
+    if args["jobs"] > 0:
+        compile_command.append("--parallel")
+        compile_command.append(str(args["jobs"]))
     compile_output = subprocess.run(compile_command, cwd=project_dir, check=True)
     if compile_output.returncode != 0:
         print("Failed to run the compile command")

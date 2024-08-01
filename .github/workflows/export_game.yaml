@@ -25,16 +25,15 @@ on:
         description: 'The OS to build the extension on'
         required: true
         type: string
+      SEQUENTIAL_COMPILES:
+        description: 'Whether to compile extensions sequentially'
+        required: true
+        type: boolean
 
 jobs:
   export_game:
     name: "Export Game ${{ inputs.GAME_EXPORT_NAME }}"
     runs-on: ${{ inputs.BUILD_OS }}
-    env:
-      LIBGL_ALWAYS_SOFTWARE: true
-      GALLIUM_DRIVER: llvmpipe
-      MESA_VK_DEVICE_SELECT: llvmpipe
-      DISPLAY: ":42"
 
     steps:
       - uses: actions/checkout@v4
@@ -52,32 +51,42 @@ jobs:
           GODOT_REPO: ${{ inputs.GODOT_REPO }}
 
       - uses: ./.github/actions/setup_headless_display
+        id: setup_headless_display
 
       - name: Generate default_asset manifest files
         run: python default_assets/manifests.py
 
       - name: Retreive extensions artifacts (debug)
-        uses: actions/download-artifact@v4
+        if: ${{ inputs.SEQUENTIAL_COMPILES == false }}
+        uses: actions/download-artifact@v3
         with:
           name: extension_${{ runner.os }}_debug_${{ inputs.EXTENSIONS_ARCHITECTURE }}
           path: bin
 
       - name: Retreive extensions artifacts (release)
-        uses: actions/download-artifact@v4
+        if: ${{ inputs.SEQUENTIAL_COMPILES == false }}
+        uses: actions/download-artifact@v3
         with:
           name: extension_${{ runner.os }}_release_${{ inputs.EXTENSIONS_ARCHITECTURE }}
           path: bin
 
+      - name: Retreive extensions artifacts (sequential)
+        if: ${{ inputs.SEQUENTIAL_COMPILES == true }}
+        uses: actions/download-artifact@v3
+        with:
+          name: extension_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+          path: bin
+
       - name: install the editor extensions (debug)
         if: ${{ inputs.EXTENSIONS_ARCHITECTURE != 'native' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: extension_${{ runner.os }}_debug_native
           path: bin
 
       - name: install the editor extensions (release)
         if: ${{ inputs.EXTENSIONS_ARCHITECTURE != 'native' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: extension_${{ runner.os }}_release_native
           path: bin
@@ -86,16 +95,16 @@ jobs:
         run: mkdir build
 
       - name: Import all assets
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --import project.godot
+        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --import project.godot
 
       - name: Export Client
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --export-release 'Client ${{ inputs.GAME_EXPORT_NAME }}' project.godot
+        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --export-release 'Client ${{ inputs.GAME_EXPORT_NAME }}' project.godot
 
       - name: Export Server
-        run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
+        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
         
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: game_export_${{ inputs.GAME_ARTIFACT_NAME }}
           path: build

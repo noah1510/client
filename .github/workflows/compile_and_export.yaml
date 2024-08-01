@@ -25,6 +25,15 @@ on:
         description: 'The OS to build the extension on'
         required: true
         type: string
+      SEQUENTIAL_COMPILES:
+        description: 'Whether to compile extensions sequentially'
+        required: true
+        type: boolean
+      COMPILE_THREADS:
+        description: 'The number of threads to use for compilation'
+        required: false
+        type: number
+        default: 0
 
 jobs:
   compile_extensions:
@@ -34,6 +43,8 @@ jobs:
       GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
       BUILD_OS: ${{ inputs.BUILD_OS }}
       EXTENSIONS_ARCHITECTURE: ${{ inputs.EXTENSIONS_ARCHITECTURE }}
+      SEQUENTIAL_COMPILES: ${{ inputs.SEQUENTIAL_COMPILES }}
+      COMPILE_THREADS: ${{ inputs.COMPILE_THREADS }}
 
   export_game:
     needs: compile_extensions
@@ -46,3 +57,4 @@ jobs:
       GAME_ARTIFACT_NAME: ${{ inputs.GAME_ARTIFACT_NAME }}
       BUILD_OS: ${{ inputs.BUILD_OS }}
       EXTENSIONS_ARCHITECTURE: ${{ inputs.EXTENSIONS_ARCHITECTURE }}
+      SEQUENTIAL_COMPILES: ${{ inputs.SEQUENTIAL_COMPILES }}

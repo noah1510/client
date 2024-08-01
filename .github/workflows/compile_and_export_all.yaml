@@ -50,6 +50,7 @@ jobs:
       GAME_ARTIFACT_NAME: ${{ matrix.name }}
       BUILD_OS: ${{ matrix.os }}
       EXTENSIONS_ARCHITECTURE: ${{ matrix.arch }}
+      SEQUENTIAL_COMPILES: false
 
 
   combine_extension_artifacts:
