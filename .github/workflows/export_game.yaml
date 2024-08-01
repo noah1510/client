@@ -56,52 +56,27 @@ jobs:
       - name: Generate default_asset manifest files
         run: python default_assets/manifests.py
 
-      - name: Retreive extensions artifacts (debug)
-        if: ${{ inputs.SEQUENTIAL_COMPILES == false }}
+      - name: Retrieve extension artifacts
         uses: actions/download-artifact@v3
         with:
-          name: extension_${{ runner.os }}_debug_${{ inputs.EXTENSIONS_ARCHITECTURE }}
-          path: bin
+          pattern: extension_*
+          path: _bin
 
-      - name: Retreive extensions artifacts (release)
-        if: ${{ inputs.SEQUENTIAL_COMPILES == false }}
-        uses: actions/download-artifact@v3
-        with:
-          name: extension_${{ runner.os }}_release_${{ inputs.EXTENSIONS_ARCHITECTURE }}
-          path: bin
-
-      - name: Retreive extensions artifacts (sequential)
-        if: ${{ inputs.SEQUENTIAL_COMPILES == true }}
-        uses: actions/download-artifact@v3
-        with:
-          name: extension_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}
-          path: bin
-
-      - name: install the editor extensions (debug)
-        if: ${{ inputs.EXTENSIONS_ARCHITECTURE != 'native' }}
-        uses: actions/download-artifact@v3
-        with:
-          name: extension_${{ runner.os }}_debug_native
-          path: bin
-
-      - name: install the editor extensions (release)
-        if: ${{ inputs.EXTENSIONS_ARCHITECTURE != 'native' }}
-        uses: actions/download-artifact@v3
-        with:
-          name: extension_${{ runner.os }}_release_native
-          path: bin
+      - name: Combine extension artifacts
+        shell: bash
+        run: cp _bin/*/* bin
       
       - name: Create the build directory
         run: mkdir build
 
       - name: Import all assets
-        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --import project.godot
+        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --import project.godot
 
       - name: Export Client
-        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --export-release 'Client ${{ inputs.GAME_EXPORT_NAME }}' project.godot
+        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Client ${{ inputs.GAME_EXPORT_NAME }}' project.godot
 
       - name: Export Server
-        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
+        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
         
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3

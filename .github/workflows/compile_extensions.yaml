@@ -71,7 +71,7 @@ jobs:
         run: python ./extensions/scripts/compile.py --target_arch=${{ inputs.EXTENSIONS_ARCHITECTURE }} --build_dir=extensions/build --mode=${{ matrix.build_mode }} --threads=${{ inputs.COMPILE_THREADS }}
 
       - name: Upload extension artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: extension_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
           path: |
