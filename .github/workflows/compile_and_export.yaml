@@ -9,6 +9,10 @@ on:
         description: 'The repository to download godot from'
         required: true
         type: string
+      UPDATE_CACHES:
+        description: 'upload new cache versions'
+        required: true
+        type: bool
       GAME_EXPORT_NAME:
         description: 'The name of the export'
         required: true
@@ -42,6 +46,7 @@ jobs:
     with:
       GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
       BUILD_OS: ${{ inputs.BUILD_OS }}
+      UPDATE_CACHES: ${{ inputs.UPDATE_CACHES }}
       EXTENSIONS_ARCHITECTURE: ${{ inputs.EXTENSIONS_ARCHITECTURE }}
       SEQUENTIAL_COMPILES: ${{ inputs.SEQUENTIAL_COMPILES }}
       COMPILE_THREADS: ${{ inputs.COMPILE_THREADS }}

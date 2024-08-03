@@ -22,6 +22,10 @@ on:
         required: false
         type: number
         default: 0
+      UPDATE_CACHES:
+        description: 'upload new cache versions'
+        required: true
+        type: bool
 
 jobs:
   compile_extensions_parallel:
@@ -41,6 +45,7 @@ jobs:
     
       - uses: actions/cache@v4
         id: cache
+        if: ${{ inputs.UPDATE_CACHES == true }}
         with:
           path: extensions/build
           key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
@@ -48,6 +53,16 @@ jobs:
             extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
             extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
 
+      - uses: actions/cache/restore@v4
+        id: cache
+        if: ${{ inputs.UPDATE_CACHES == false }}
+        with:
+          path: extensions/build
+          key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
+          restore-keys: |
+            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
+            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+            
       - name: install build deps (linux)
         if: runner.os == 'Linux'
         run: |
@@ -92,12 +107,23 @@ jobs:
     
       - uses: actions/cache@v4
         id: cache
+        if: ${{ inputs.UPDATE_CACHES == true }}
         with:
           path: extensions/build
-          key: extension_cache_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
+          key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
           restore-keys: |
-            extension_cache_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
-            extension_cache_${{ runner.os }}_sequential_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
+            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
+
+      - uses: actions/cache/restore@v4
+        id: cache
+        if: ${{ inputs.UPDATE_CACHES == false }}
+        with:
+          path: extensions/build
+          key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
+          restore-keys: |
+            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
+            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
 
       - name: install build deps (linux)
         if: runner.os == 'Linux'
