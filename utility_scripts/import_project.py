@@ -1,0 +1,56 @@
+import argparse
+import os
+import platform
+import subprocess
+import stat
+import shutil
+
+from typing import List
+
+if __name__ == "__main__":
+    script_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+    project_dir = os.path.join(script_dir, '..')
+    
+    parser = argparse.ArgumentParser(
+        description="import all the assets"
+    )
+
+    parser.add_argument(
+        "--launcher_command",
+        type=str,
+        default="",
+        help="A command or script used to launch the godot exe",
+        dest="launcher_cmd"
+    )
+    
+    parser.add_argument(
+        "--godot_path",
+        type=str,
+        default="",
+        help="The path to the godot editor console execuatable",
+        dest="godot_cmd"
+    )
+
+    args = vars(parser.parse_args())
+    print(args)
+    
+    editor_command = []
+    if args["launcher_cmd"] != "":
+        editor_command.append(args["launcher_cmd"])
+        
+    if args["godot_cmd"] == "":
+        print("No godot exe given. Exiting!")
+        exit(1)
+        
+    editor_command.append(args["godot_cmd"])
+    editor_command.append('--headless')
+    editor_command.append('--import')
+    
+    print(editor_command)
+    
+    subprocess.run(editor_command, cwd=project_dir, check=False, timeout=15)
+    subprocess.run(editor_command, cwd=project_dir, check=False, timeout=30)
+    import_output = subprocess.run(editor_command, cwd=project_dir, check=True)
+    if import_output.returncode != 0:
+        print("Failed to import the project")
+        exit(1)

@@ -3,13 +3,13 @@ project(openchamp LANGUAGES CXX)
 
 set(GODOT_GDEXTENSION_DIR "${CMAKE_SOURCE_DIR}")
 
-find_program(CCACHE_PROGRAM ccache)
+find_program(CCACHE_PROGRAM NAMES ccache sccache)
 if (CCACHE_PROGRAM)
-    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
-    message(STATUS "Ccache found: ${CCACHE_PROGRAM}")
+	set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+	set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+	message(STATUS "Ccache found: ${CCACHE_PROGRAM}")
 else ()
-    message(STATUS "Ccache not found")
+	message(STATUS "Neither ccache nor sccache found")
 endif ()
 
 if (GODOT_DISABLE_EXCEPTIONS)
@@ -29,8 +29,8 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
 set(SOURCES
-    src/register_types.cpp
-    src/identifier.cpp
+	src/register_types.cpp
+	src/identifier.cpp
 	src/dynamic_asset_indexer.cpp
 	src/data_cache_manager.cpp
 )
@@ -40,9 +40,9 @@ add_library(openchamp SHARED ${SOURCES})
 
 
 if(WIN32)
-    if(MINGW)
+	if(MINGW)
 		target_link_libraries(openchamp -static gcc stdc++ winpthread -dynamic)
-    endif()
+	endif()
 endif()
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)

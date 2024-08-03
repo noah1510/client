@@ -71,7 +71,10 @@ jobs:
 
       - name: Import all assets
         shell: bash
-        run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --import project.godot
+        run: |
+            python utility_scripts/import_project.py \
+            --launcher_command="${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }}" \
+            --godot_path="${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }}"
 
       - name: Export Client
         shell: bash

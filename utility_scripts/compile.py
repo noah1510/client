@@ -40,7 +40,7 @@ def setup_docker_image(target_arch: str, project_dir: str) -> str:
 
 if __name__ == "__main__":
     script_dir = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
-    extensions_dir = os.path.join(script_dir, "..")
+    extensions_dir = os.path.join(script_dir, "..", "extensions")
     project_dir = os.path.join(extensions_dir, "..")
     default_api_file = os.path.join(extensions_dir, "extension_api.json")
 
