@@ -42,20 +42,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
-    
-      - uses: actions/cache@v4
-        id: cache
-        if: ${{ inputs.UPDATE_CACHES == true }}
-        with:
-          path: extensions/build
-          key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
-          restore-keys: |
-            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
-            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
 
       - uses: actions/cache/restore@v4
-        id: cache
-        if: ${{ inputs.UPDATE_CACHES == false }}
+        id: cache_restore
         with:
           path: extensions/build
           key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
@@ -95,6 +84,14 @@ jobs:
             bin/*.dylib
             bin/**.framework
             bin/*.so
+      
+      - uses: actions/cache/save@v4
+        id: cache_save
+        if: ${{ inputs.UPDATE_CACHES == true }}
+        with:
+          path: extensions/build
+          key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
+
 
   compile_extensions_sequential:
     if: ${{ inputs.SEQUENTIAL_COMPILES == true }}
@@ -104,20 +101,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
-    
-      - uses: actions/cache@v4
-        id: cache
-        if: ${{ inputs.UPDATE_CACHES == true }}
-        with:
-          path: extensions/build
-          key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
-          restore-keys: |
-            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}
-            extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}
 
       - uses: actions/cache/restore@v4
-        id: cache
-        if: ${{ inputs.UPDATE_CACHES == false }}
+        id: cache_restore
         with:
           path: extensions/build
           key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
@@ -160,3 +146,10 @@ jobs:
             bin/*.dylib
             bin/**.framework
             bin/*.so
+      
+      - uses: actions/cache/save@v4
+        id: cache_save
+        if: ${{ inputs.UPDATE_CACHES == true }}
+        with:
+          path: extensions/build
+          key: extension_cache_${{ runner.os }}_${{ matrix.build_mode }}_${{ inputs.EXTENSIONS_ARCHITECTURE }}_${{ inputs.GODOT_VERSION }}-${{ github.run_id }}
