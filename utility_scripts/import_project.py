@@ -36,13 +36,15 @@ if __name__ == "__main__":
     
     editor_command = []
     if args["launcher_cmd"] != "":
-        editor_command.append(args["launcher_cmd"])
+        launcher_path = Path(args["launcher_cmd"])
+        editor_command.append(str(launcher_path))
         
     if args["godot_cmd"] == "":
         print("No godot exe given. Exiting!")
         exit(1)
-        
-    editor_command.append(args["godot_cmd"])
+    
+    godot_command = Path(args["godot_cmd"])
+    editor_command.append(str(godot_command))
     editor_command.append('--headless')
     editor_command.append('--import')
     
