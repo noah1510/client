@@ -50,7 +50,7 @@ jobs:
     with:
       GODOT_VERSION: ${{ inputs.GODOT_VERSION }}
       GODOT_REPO: ${{ inputs.GODOT_REPO }}
-      UPDATE_CACHES: $ {{ inputs.UPDATE_CACHES }}
+      UPDATE_CACHES: ${{ inputs.UPDATE_CACHES }}
       GAME_EXPORT_NAME: ${{ matrix.export_type }}
       GAME_ARTIFACT_NAME: ${{ matrix.name }}
       BUILD_OS: ${{ matrix.os }}
