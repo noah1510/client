@@ -22,7 +22,7 @@ def get_dirs(version_string):
             godot_console_subdir = godot_program_subdir
         case "win32" | "cygwin":
             system_type = "win64.exe"
-            export_template_dir = f"{os.getenv('APPDATA')}/Godot/templates/{template_version_string}"
+            export_template_dir = f"{os.getenv('APPDATA')}/Godot/export_templates/{template_version_string}"
             godot_program_subdir = f"Godot_v{version_string}_win64.exe"
             godot_console_subdir = f"Godot_v{version_string}_win64_console.exe"
         case "darwin":
