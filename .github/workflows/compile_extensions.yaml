@@ -25,7 +25,7 @@ on:
       UPDATE_CACHES:
         description: 'upload new cache versions'
         required: true
-        type: bool
+        type: boolean
 
 jobs:
   compile_extensions_parallel:
