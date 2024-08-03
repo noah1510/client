@@ -134,7 +134,7 @@ if __name__ == "__main__":
             godot_exe = os.path.join(godot_installs_dir, godot_program_subdir)
             var_name = "GODOT_EXE"
 
-        godot_exe = str(Path(godot_exe.as_posix()))
+        godot_exe = str(Path(godot_exe).as_posix())
         print(godot_exe)
         os.chmod(
             godot_exe,
