@@ -70,12 +70,15 @@ jobs:
         run: mkdir build
 
       - name: Import all assets
+        shell: bash
         run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --import project.godot
 
       - name: Export Client
+        shell: bash
         run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Client ${{ inputs.GAME_EXPORT_NAME }}' project.godot
 
       - name: Export Server
+        shell: bash
         run: ${{ steps.setup_headless_display.outputs.HEADLESS_LAUNCHER }} ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
         
       - name: Upload build artifacts
