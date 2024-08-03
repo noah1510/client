@@ -5,6 +5,7 @@ import subprocess
 import stat
 import shutil
 
+from pathlib import Path
 from typing import List
 
 if __name__ == "__main__":
