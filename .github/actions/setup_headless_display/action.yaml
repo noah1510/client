@@ -32,8 +32,12 @@ runs:
             vulkan-tools \
             vulkan-validationlayers
 
+    - name: Install launcher script in user dir
+      shell: bash
+      run: cp $GITHUB_ACTION_PATH/xvfb_launch.sh $HOME/xvfb_launch.sh
+    
     - name: Setup xvfb
       id: setup_xvfb
       shell: bash
-      run: echo "setup_xvfb=$GITHUB_ACTION_PATH/xvfb_launch.sh" >> "$GITHUB_OUTPUT"
+      run: echo "setup_xvfb=$HOME/xvfb_launch.sh" >> "$GITHUB_OUTPUT"
         
