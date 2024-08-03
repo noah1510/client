@@ -54,7 +54,7 @@ jobs:
         run: python default_assets/manifests.py
 
       - name: Retrieve extension artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           pattern: extension_*
           path: _bin
@@ -81,7 +81,7 @@ jobs:
         run: ${{ steps.setup_godot.outputs.GODOT_CONSOLE_EXE }} --headless --export-release 'Server ${{ inputs.GAME_EXPORT_NAME }}' project.godot
         
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: game_export_${{ inputs.GAME_ARTIFACT_NAME }}
           path: build
