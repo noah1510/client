@@ -68,7 +68,7 @@ jobs:
           choco install -y ccache
 
       - name: Compile the extension
-        run: python ./extensions/scripts/compile.py --target_arch=${{ inputs.EXTENSIONS_ARCHITECTURE }} --build_dir=extensions/build --mode=${{ matrix.build_mode }} --threads=${{ inputs.COMPILE_THREADS }}
+        run: python ./utility_scripts/compile.py --target_arch=${{ inputs.EXTENSIONS_ARCHITECTURE }} --build_dir=extensions/build --mode=${{ matrix.build_mode }} --threads=${{ inputs.COMPILE_THREADS }}
 
       - name: Upload extension artifacts
         uses: actions/upload-artifact@v3
