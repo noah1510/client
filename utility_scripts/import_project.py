@@ -48,8 +48,16 @@ if __name__ == "__main__":
     
     print(editor_command)
     
-    subprocess.run(editor_command, cwd=project_dir, check=False, timeout=15)
-    subprocess.run(editor_command, cwd=project_dir, check=False, timeout=30)
+    try:
+        subprocess.run(editor_command, cwd=project_dir, check=False, timeout=15)
+    except:
+        print('timeout on try 1')
+        
+    try:
+        subprocess.run(editor_command, cwd=project_dir, check=False, timeout=30)
+    except:
+        print('timeout on try 2')
+    
     import_output = subprocess.run(editor_command, cwd=project_dir, check=True)
     if import_output.returncode != 0:
         print("Failed to import the project")
